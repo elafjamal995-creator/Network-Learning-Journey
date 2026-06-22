@@ -11,4 +11,4 @@ My goal is not only to complete labs, but also to understand how networks work i
 ## Lab Roadmap
 This lab sequence is inspired by the practical CCNA roadmap shared by GuruTech Networking and adapted to fit my own learning goals and study process.
 The purpose is not simply completing labs, but understanding concepts deeply and building practical networking skills.
-![CCNA Learning Roadmap](Packet-Tracer-Labs/images/roadmap.png)
+![CCNA Learning Roadmap](images/roadmap.png)
