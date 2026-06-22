@@ -1,4 +1,4 @@
-# Packet Tracer Labs
+# Packet-Tracer-Labs
 ## Objective
 This repository documents my practical networking journey using Packet Tracer.
 My goal is not only to complete labs, but also to understand how networks work internally, troubleshoot problems, and build a strong foundation for enterprise networking.
