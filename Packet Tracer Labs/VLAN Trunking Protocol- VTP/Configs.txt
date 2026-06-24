@@ -1,0 +1,32 @@
+1. Trunk and Access Ports Configuration
+Before configuring VTP, you must set up the physical interface modes. Links between switches must be Trunk ports, and links to end devices must be Access ports.
+Configure Trunk Links (Between Switches):
+Switch(config)# interface range <interface_range>
+Switch(config-if)# switchport mode trunk
+Configure Access Links (To End Devices):
+Switch(config)# interface <interface_name>
+Switch(config-if-range)# switchport mode access
+---------------------------------------------
+2. VTP Configuration
+To enable automatic VLAN replication, configure one switch as the VTP Server and the remaining switches as VTP Clients.
+Important: All switches must share the exact same VTP Domain Name, Password, and Version to communicate.  
+Configure Switch 0 as the VTP Server:
+Switch0(config)# vtp domain <domain_name>
+Switch0(config)# vtp password <your_password>
+Switch0(config)# vtp version <1-2>
+Switch0(config)# vtp mode server
+Configure the Remaining Switches as VTP Clients:
+Switch(config)# vtp domain <domain_name>
+Switch(config)# vtp password <your_password>
+Switch(config)# vtp version <1-2>
+Switch(config)# vtp mode client
+----------------------------------------
+3. VLAN Creation and Verification
+Now, create the VLANs only on the VTP Server (Switch0). The configurations will propagate automatically to all VTP Clients.
+Create VLAN on VTP Server (Switch0):
+Switch0(config)# vlan <vlan_id>
+Switch0(config-vlan)# name <vlan_name>
+Verification (On All Switches):
+To verify that the VLANs have been successfully created and replicated across the network, return to Privileged EXEC mode (Switch#) and run:
+Switch# show vlan brief
+  (On the client switches, you should automatically see the VLAN layers created by Switch0 without any manual configuration).  
