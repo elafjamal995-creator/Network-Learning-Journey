@@ -1,0 +1,33 @@
+1. Creating VLANs
+To create VLANs, start in Global Configuration Mode:
+Switch(config)# vlan <vlan_number> 
+Once you enter the VLAN configuration mode, you can assign a name to it.
+Example from the lab:
+Switch(config)# vlan 10
+Switch(config-vlan)# name IT
+----------------------------------------------
+2. Configuring Access Ports (Switch to End Devices)
+To configure the interfaces connecting the switch to end devices (PCs, Laptops, etc.), use the interface range command to apply settings to multiple ports at once:
+Switch(config)# interface range f0/2-7  
+Next, set the mode to Access:
+Switch(config-if-range)# switchport mode access
+Finally, assign these interfaces to the specific VLAN you created:
+Switch(config-if-range)# switchport access vlan 10
+-------------------------------------------------
+3. Configuring Trunk Ports (Switch to Switch)
+To allow traffic from multiple VLANs to pass between switches, you need to configure the connecting interfaces as Trunk ports.
+Select the interface connecting the switches:
+Switch(config)# interface f0/1
+Change the mode to Trunk:
+Switch(config-if)# switchport mode trunk
+---------------------------------------------
+4. Verification Commands (Checking Your Work)
+To verify your configuration and ensure everything is working correctly, return to Privileged EXEC Mode (Switch#) and use the following commands:
+To check created VLANs and assigned ports:  
+Switch# show vlan brief
+(This command will display a list of all VLANs, their names, and which access ports belong to them. You should see VLAN 10 named "IT" active on ports f0/2 to f0/7).  
+To check trunk interfaces:
+Switch# show interfaces trunk
+  (This command will show which ports are operating in trunk mode, the encapsulation type, and the VLANs allowed to pass through the link. You should see f0/1 listed here).
+  
+  
