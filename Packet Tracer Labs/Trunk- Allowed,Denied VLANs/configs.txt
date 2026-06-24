@@ -1,0 +1,68 @@
+1. Concept Overview (VLAN Pruning)
+By default, a Cisco trunk interface allows all VLANs (1-4094) to pass traffic across the link.
+However, forwarding unnecessary broadcast traffic to switches that do not have active ports in those VLANs wastes bandwidth and compromises security.
+
+To optimize network efficiency, we configure VLAN Pruning manually using the (switchport trunk allowed vlan) command.
+  This limits the trunk link to carrying only the specific VLAN traffic required by the neighboring switches.  
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ 2. Practical Configuration Steps 
+Option A: Allowing Only Specific VLANs (Overwriting the list)
+
+To configure and manage allowed VLANs on a trunk interface, navigate to the specific trunk port (e.g., FastEthernet 0/1):
+If you want to restrict the trunk to only permit specific VLANs (e.g., VLAN 10 and VLAN 20) and block everything else:
+
+Switch(config)# interface f0/1
+Switch(config-if)# switchport trunk allowed vlan 10,20
+Note:This command completely rewrites the allowed list. Only VLAN 10 and 20 can cross this link now; all other VLANs are implicitly denied.  
+
+Option B: Adding a New VLAN to an Existing Allowed List
+
+If the trunk is already filtering traffic, and you want to add a new VLAN (e.g., VLAN 30) without erasing your previous configuration (VLAN 10 and 20):
+
+Switch(config-if)# switchport trunk allowed vlan add 30
+Warning for learners: Always use the "add" keyword when modifying an existing list.
+  If you type switchport trunk allowed vlan 30 without add, it will wipe out VLAN 10 and 20 from the trunk.  
+
+Option C: Denying/Removing a Specific VLAN from the Trunk
+If you want to explicitly block or remove a specific VLAN (e.g., VLAN 10) from passing through the trunk link:
+
+Switch(config-if)# switchport trunk allowed vlan remove 10
+
+Option D: Resetting to Factory Defaults (Allow All)
+To remove all restrictions and allow all VLANs to pass through the trunk interface once again:
+
+Switch(config-if)# no switchport trunk allowed vlan
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+3. Verification Commands
+To verify which VLANs are currently permitted to cross your trunk interface, return to Privileged EXEC mode (Switch#) and run:
+
+Switch# show interfaces trunk
+-------------------------------------------------------------------------------------------------------------------------------------------------
+
+## 4. The Engineering Philosophy: Why Do We Need This Command?
+
+A common question among learners is: **"Why did network engineers design this command, and what real-world problem does it solve?"**
+
+When networks began growing into hundreds of nodes, engineers faced two critical bottlenecks: **Network Degradation (Performance)** and **Information Exposure (Security)**.
+
+---
+
+### Problem 1: The Wasteful Broadcast Traffic (Performance)
+By default, **Broadcast frames** (like ARP requests) are sent to every single device inside a VLAN. 
+
+* **The Scenario:** Imagine a university campus with two switches connected by a trunk link. 
+  * `Switch A` has active ports in `VLAN 10` (Students) and `VLAN 50` (Admission Office).
+  * `Switch B` only has student devices (`VLAN 10`) and has **zero** ports assigned to `VLAN 50`.
+* **Without VLAN Pruning:** If a device in `VLAN 50` on `Switch A` sends a broadcast message, the switch automatically forwards it across the Trunk link to `Switch B`. `Switch B` receives the frame, processes it, realizes it has no ports in `VLAN 50`, and drops it.
+* **The Engineering Solution:** This process wastes valuable trunk bandwidth and unnecessary CPU cycles on `Switch B`. By configuring `switchport trunk allowed vlan`, engineers created a "filter gateway" at the entrance of the trunk link to stop unwanted broadcast traffic from travelling to switches that do not need it.
+
+---
+
+### Problem 2: Minimizing the Attack Surface (Security)
+In networking, we follow the **Principle of Least Privilege** (giving devices only the access they strictly need to function).
+
+* **The Risk:** If a Trunk link permits all VLANs by default, an attacker who compromises a switch downstream could potentially capture or sniff sensitive control and data frames belonging to management or financial VLANs—even if those VLANs were never meant to exist on that specific switch.
+* **The Engineering Solution:** Manually restricting the allowed VLANs on a trunk link ensures that sensitive data never leaves the core switches unless explicitly required. If an attacker snoops on a restricted trunk link, the data for unauthorized VLANs is physically non-existent on that wire.  
+  
+  
