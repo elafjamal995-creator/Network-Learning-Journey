@@ -1,0 +1,61 @@
+# Lab: Implementing Secure Remote Management via SSH (Secure Shell)
+
+## 1. The Engineering Philosophy: Why We Upgraded to SSH
+
+In our previous lab, we successfully configured **Telnet** for remote management. However, Telnet transmits all data—including usernames and passwords—in **Plain Text** (clear text) across the Layer 7 Application layer. Anyone intercepting the traffic with a packet sniffer (like Wireshark) can easily steal administrative credentials.
+
+**SSH (Secure Shell)** solves this vulnerability. It establishes an **encrypted cryptographic tunnel** between the administrator's PC and the switch's CPU management plane. Even if a malicious actor sniffs the wire, they will only see unreadable ciphertext, ensuring full confidentiality.
+
+---
+
+## 2. Infrastructure Prerequisites & Cryptographic Anchors
+
+Unlike Telnet, SSH will **refuse to generate encryption keys** if the device retains its generic factory identity. The Cisco IOS requires a unique combination of a **Hostname** and an **IP Domain-Name** to act as a mathematical seed for the encryption algorithm.
+
+Switch(config)# hostname sw1-lab
+sw1-lab(config)# ip domain-name security.lab
+
+Fact:The switch combines these to create a Fully Qualified Domain Name (FQDN), which in this case is sw1-lab.security.lab. 
+This unique string is used directly in generating your cryptographic keys.
+----------------------------------------------------------------------------------
+Step 1: Configuring Layered Security & User Database
+We establish a local user database with maximum execution authority (privilege 15) and set a secure global vault password.
+sw1-lab(config)# username elaf privilege 15 password cisco
+sw1-lab(config)# enable secret cisco2
+-------------------------------------------------------------------------------------
+Step 2:Generating the RSA Cryptographic Keys
+To activate the encryption engine, we generate an RSA (Rivest-Shamir-Adleman) key pair.
+
+sw1-lab(config)# crypto key generate rsa
+
+Upon executing this command, the system will prompt you:
+How many bits in the modulus [512]: Type 1024 and press Enter.
+Understanding the Key Modulus:
+Why 1024 bits? The modulus size defines the strength of the encryption. 
+While 512 bits is obsolete and easily cracked, 1024 bits provides a robust balance of strong security for Cisco IOS standard environments without overloading the switch's CPU performance during session initialization.
+--------------------------------------------------------------------------------------
+Step 3:Hardening the Virtual Terminal Lines (VTY)
+sw1-lab(config)# line vty 0 15
+sw1-lab(config-line)# login local
+sw1-lab(config-line)# transport input ssh
+
+transport input ssh: This is our security firewall for virtual lines.
+It permanently disables the unencrypted Telnet protocol and mandates that any incoming remote session must use SSH.
+--------------------------------------------------------------------------------------
+Step 4:Layer 3 Reachability & Multi-Subnet Routing Check
+Before attempting to establish an SSH tunnel, the data plane must possess flawless bilateral reachability.
+1-Ensure the Switch Virtual Interface (SVI) has its management identity:
+sw1-lab(config)# interface vlan 1
+sw1-lab(config-if)# ip address 192.168.2.2 255.255.255.0
+sw1-lab(config-if)# no shutdown
+
+2-The "Two-Way Street" Gateway Rule: Because our ADMIN-PC (192.168.1.x) sits on a completely different subnet than our switch (192.168.2.x), both devices must have their Default Gateways configured correctly. * The Switch needs: ip default-gateway 192.168.2.1
+  The ADMIN-PC network card needs its gateway set to: 192.168.1.1
+   If either gateway is missing, the return path breaks, resulting in a Request Timed Out error.
+-----------------------------------------------------------------------------------------
+Step 5:Execution and Verification
+1.5-Verify End-to-End Ping: From the ADMIN-PC Command Prompt, ping the switch. Allow 1-2 packets to drop initially for ARP convergence before achieving a 100% success rate:
+C:\> ping 192.168.2.2
+2.5-Establish the Secure Session: C:\> ssh -l elaf 192.168.2.2
+
+You are now securely inside the switch command line via an active, encrypted cryptographic session!
