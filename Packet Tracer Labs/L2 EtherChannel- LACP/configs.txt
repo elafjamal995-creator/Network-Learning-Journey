@@ -1,0 +1,57 @@
+# Lab: Implementing Vendor-Neutral EtherChannel using Link Aggregation Control Protocol (LACP)
+
+## 1. The Engineering Philosophy: Breaking Vendor Locks
+
+In our previous lab, we explored Cisco's proprietary bundling protocol, PAgP. While PAgP works flawlessly, it introduces a severe real-world limitation: **Vendor Lock-In**. It only functions if every single switch in your enterprise network is made by Cisco.
+
+In modern production data centers, networks are highly diverse (**Multi-Vendor Environments**). If you need to bundle links between a Cisco core switch and a non-Cisco switch (such as HP, Juniper, or Huawei), PAgP will fail instantly because foreign switches cannot speak Cisco's private language.
+
+To solve this, the industry established **LACP (Link Aggregation Control Protocol)**, governed under the open standard **IEEE 802.3ad**. LACP serves as the universal, open-source language that allows any switches from any manufacturer to safely bundle their physical links into a single logical channel.
+
+---
+
+## 2. Operational Modes & The Passive/Passive Trap
+
+Similar to PAgP, LACP uses negotiation states to establish the logical link, but it introduces distinct terminology to prevent protocol confusion:
+
+* **Active:** The switch takes full initiative. It immediately and continuously transmits LACP negotiation packets across the physical links, demanding the remote side: *"Let's negotiate right now and bundle these ports."*
+* **Passive:** The switch acts as an attentive listener. It remains quiet and will never initiate negotiation packets. However, if the remote switch approaches it with an Active request, it will gladly accept and form the bundle.
+
+### ⚠️ The Deterministic Matrix of LACP Success & Failure
+When configuring your lab, you must strictly avoid the passive trap:
+* `Active + Active` = **Success** (Both proactively build the bundle).
+* `Active + Passive` = **Success** (The active triggers, the passive responds).
+* `Passive + Passive` = **Absolute Failure ❌** (Both switches sit in silent listening modes. Neither initiates the conversation. Consequently, the links remain unbundled, and STP will immediately step in and block the extra cables!).
+
+
+## 3. Configuration Breakdown
+
+### Step 1: Selecting Interfaces and Binding to LACP
+We group identical physical interfaces together using the `range` command on the first switch (`Switch0`):
+
+
+Switch0(config)# interface range fastEthernet 0/1 - 3
+Switch0(config-if-range)# channel-group 1 mode active
+--------------------------------------------------------------------
+Behind the Scenes: Specifying the mode as active tells the Cisco IOS software to load the LACP engine (instead of PAgP) and spin up a new virtual interface called interface port-channel 1 in the RAM.
+
+Now, move to the second switch  and configure the opposite side of the links. To test compliance, we will configure it to the passive state:
+Switch1(config)# interface range fastEthernet 0/1 - 3
+Switch1(config-if-range)# channel-group 1 mode passive
+--------------------------------------------------------------------
+Applying Global Trunking Parameters
+Never configure trunk protocols on individual bundled ports; doing so causes configuration synchronization errors. Instead, we apply all configurations directly to the virtual Port-Channel interface, which pushes the commands down to all member links automatically:
+Switch0(config)# interface port-channel 1
+Switch0(config-if)# switchport mode trunk
+-----------------------------------------------------------------------
+Verification & Diagnostic Commands
+To confirm that the negotiation successfully bypassed Spanning Tree blocks, execute the summary command from privileged EXEC mode:
+Switch0# show etherchannel 
+
+
+
+
+
+
+
+
