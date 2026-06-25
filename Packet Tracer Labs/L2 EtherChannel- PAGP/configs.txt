@@ -1,0 +1,74 @@
+# Lab: Implementing EtherChannel Link Aggregation using Port Aggregation Protocol (PAgP)
+
+## 1. The Engineering Challenge: Overcoming Spanning Tree Limits
+
+Imagine connecting two switches together using a single text{ Gbps} trunk link. As network traffic grows, this single link becomes a performance bottleneck. 
+
+* **The Intuitive (But Flawed) Solution:** A beginner might think, "I will simply connect 2, 3, or 4 physical cables between the switches to multiply the bandwidth."
+* **The Reality (The Loop Problem):** The moment you plug in extra cables, a built-in protective network protocol called **STP (Spanning Tree Protocol)** detects potential switching loops. To protect the network from collapsing due to a broadcast storm, STP will immediately **block (shut down)** the extra links. You are left with only one active cable, making the extra connections useless.
+
+**The Solution:** **EtherChannel**. This technology tricks STP by bundling multiple physical ports into a single **Logical Link** (one giant virtual cable). STP sees the bundle as a single connection, allowing all physical cables to transmit data simultaneously without being blocked.
+
+---
+
+## 2. Choosing the Protocol: What is PAgP?
+
+To bundle links dynamically, switches must negotiate and agree on the configuration. This lab utilizes **PAgP (Port Aggregation Protocol)**.
+* **PAgP is Cisco Proprietary:** It only operates between Cisco switches. 
+* *Alternative Note:* For non-Cisco or mixed-vendor environments, the industry standard protocol is **LACP (Link Aggregation Control Protocol)**.
+
+---
+
+## 3. Operational Modes & The "Negotiation Trap"
+
+PAgP configures physical interfaces into specific operational negotiation states:
+* **Desirable:** The switch actively initiates PAgP negotiation packets, asking the remote switch: *"Let's bundle our links together."*
+* **Auto:** The switch stays passive. It listens and waits for the other side to initiate negotiation. It will only form an EtherChannel if asked.
+
+### ⚠️ The Golden Rule of PAgP Negotiation (Crucial for Troubleshooting):
+* Desirable + Desirable =**Success** (Both actively negotiate).
+* Desirable + Auto = **Success** (The active side prompts, the passive side complies).
+* Auto + Auto = **Failure ❌** (Both switches are passive, waiting for each other. Negotiation never starts, and the links stay unbundled, leading to STP blocking them).
+
+---
+
+## 4. Deep Dive Configuration & The Encapsulation Layer
+
+### Step 1: Bundling the Ports into a Channel-Group
+Instead of configuring ports individually, we select a range of identical physical interfaces on the first switch (`Switch0`):
+
+Switch(config)# interface range fastEthernet 0/1 - 2
+Switch(config-if-range)# channel-group 1 mode desirable
+
+Behind the Scenes: The moment this command is entered, the Cisco IOS automatically instantiates a new virtual interface in the RAM called interface port-channel 1.
+This virtual interface governs the combined physical interfaces.
+
+On the second switch (Switch1), we configure the matching ports into the same group number:
+
+Switch(config)# interface range fastEthernet 0/1 - 3
+Switch(config-if-range)# channel-group 1 mode auto
+----------------------------------------------------------------------
+Configuring Trunking (Solving the Encapsulation Riddle)
+Once the physical ports are tied to the logical port-channel 1 interface, we apply trunking configurations directly to the Port-Channel interface, not the physical links.
+
+On multi-layer or older Catalyst switches, you cannot simply type switchport mode trunk. If attempted, the switch will reject the command with an error:
+
+% Command rejected: An interface whose trunk encapsulation is "Auto" can not be configured to "trunk" mode.
+The Architectural Reason: These switches support two separate trunk tagging methods: 802.1Q (Dot1q - Open Standard) and ISL (Cisco Proprietary).
+The switch refuses to form a trunk until the administrator explicitly declares how it should tag the VLAN frames.
+
+Switch(config)# interface port-channel 1
+Switch(config-if)# switchport trunk encapsulation dot1q
+Switch(config-if)# switchport mode trunk
+
+Note: If you are using a modern Layer 2 switch (like the Cisco Catalyst 2960), the legacy ISL protocol has been completely removed. 
+Because dot1q is the only remaining option, the switch applies it automatically. On those devices, typing switchport mode trunk works instantly without needing the encapsulation command.
+------------------------------------------------------------------------------
+Verification & Diagnostics
+To verify that your logical bundle is completely operational, execute the summary command from privileged EXEC mode:
+
+Switch# show etherchannel 
+
+
+
+
