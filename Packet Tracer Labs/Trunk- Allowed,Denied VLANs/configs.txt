@@ -78,8 +78,5 @@ Network communication is always a **two-way street** consisting of a request and
 1. **Traffic Dropped at the Source Gateway:** When a host on Switch A tries to ping Switch B, Switch A checks its local trunk configuration list. Since the VLAN is blocked on its interface, Switch A drops the packet immediately (`Drop`). The packet never leaves the switch.
 2. **The Destination Never Responds:** Because the packet is dropped at the very first gateway, it never reaches Switch B. Switch B cannot reply to a message it never received, resulting in a timeout.
 
----
-
 ### Key Takeaway for Learners:
 > 💡 **Trunk configuration must be symmetric!** For a Trunk link to function correctly, both opposing interfaces on both switches must have **identical allowed/denied VLAN policies**. A mismatch on even one side will break the entire communication path.
-  
