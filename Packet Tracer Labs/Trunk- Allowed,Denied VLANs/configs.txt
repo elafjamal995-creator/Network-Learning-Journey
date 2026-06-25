@@ -64,5 +64,22 @@ In networking, we follow the **Principle of Least Privilege** (giving devices on
 
 * **The Risk:** If a Trunk link permits all VLANs by default, an attacker who compromises a switch downstream could potentially capture or sniff sensitive control and data frames belonging to management or financial VLANs—even if those VLANs were never meant to exist on that specific switch.
 * **The Engineering Solution:** Manually restricting the allowed VLANs on a trunk link ensures that sensitive data never leaves the core switches unless explicitly required. If an attacker snoops on a restricted trunk link, the data for unauthorized VLANs is physically non-existent on that wire.  
-  
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+## 6. Real-World Troubleshooting Note: The "Two-Way Street" Rule
+
+During the practical implementation of this lab, a critical behavior was observed regarding how packet forwarding fails when configurations are mismatched.
+
+### The Observation:
+If you restrict or block a VLAN on **Switch A's** trunk port but leave it allowed on **Switch B's** opposing trunk port, any host in that VLAN attempting to reach the other side will receive a **`Request Timed Out`** error during a `ping` test.
+
+### Why does this happen?
+Network communication is always a **two-way street** consisting of a request and a reply (e.g., ICMP Echo Request and ICMP Echo Reply). 
+
+1. **Traffic Dropped at the Source Gateway:** When a host on Switch A tries to ping Switch B, Switch A checks its local trunk configuration list. Since the VLAN is blocked on its interface, Switch A drops the packet immediately (`Drop`). The packet never leaves the switch.
+2. **The Destination Never Responds:** Because the packet is dropped at the very first gateway, it never reaches Switch B. Switch B cannot reply to a message it never received, resulting in a timeout.
+
+---
+
+### Key Takeaway for Learners:
+> 💡 **Trunk configuration must be symmetric!** For a Trunk link to function correctly, both opposing interfaces on both switches must have **identical allowed/denied VLAN policies**. A mismatch on even one side will break the entire communication path.
   
