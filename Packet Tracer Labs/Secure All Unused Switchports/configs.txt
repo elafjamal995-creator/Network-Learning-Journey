@@ -1,1 +1,109 @@
+# Lab: Hardening Layer 2 Infrastructure by Securing Unused Switchports
+
+## 1. The Security Threat: The Open Port Vulnerability
+
+When deploying an enterprise local area network (LAN), network engineers often focus heavily on performance, leaving physical wall jacks in hallways, conference rooms, or empty offices unmanaged. 
+
+### How an Attacker Thinks:
+By default, Cisco switchports are shipped from the factory in an active status (`no shutdown`) and are assigned globally to **`VLAN 1`**. If a malicious actor walks into a building, plugs a laptop running Kali Linux into an unsecure wall jack, the switch will immediately establish a connection. From there, the attacker can sniff production traffic, launch ARP spoofing attacks, and compromise internal servers.
+
+### The Defensive Strategy:
+To mitigate this threat, we don't just rely on a single defense. We implement a **defense-in-depth architecture** that locks the physical port and completely isolates its broadcast domain.
+
+---
+
+## 2. Core Concepts: The Blackhole VLAN vs. Router Security
+
+A common architectural question among learners is: **"Do we protect unused Router interfaces the same way we protect Switchports?"**
+
+The answer is **No**, due to the fundamental differences in factory default states:
+
+* **Switchports (Layer 2):** Are designed to be plug-and-play. They are active out-of-the-box (`no shutdown`). Therefore, they require aggressive, manual hardening.
+* **Router Ports (Layer 3):** Are strictly secure by default. They are shipped entirely dead (`shutdown`). An attacker plugging a cable into a router port will not even get a physical link light. Routers also treat every interface as a separate layer-3 boundary, meaning they do not use VLAN broadcast concepts like switches do.
+
+---
+
+## 3. Step-by-Step Implementation & Engineering Logic
+
+### Step 1: Create Legitimate Production VLANs
+First, we build and isolate our legitimate corporate user environments (e.g., Students and Staff):
+
+
+Switch(config)# vlan 10
+Switch(config-vlan)# name FIN
+Switch(config-vlan)# vlan 20
+Switch(config-vlan)# name IT
+Switch(config-vlan)# vlan 30
+Switch(config-vlan)# name HR
+-------------------------------------------------------------------------------------------------
+Step 2: Spin Up the Blackhole/Fake VLAN (The Dead End)
+We create a totally fake, unrouted VLAN that has no Layer 3 IP Gateway, no internet routing access, and hosts zero legitimate corporate resources. We call this the Blackhole VLAN:
+Switch(config)# vlan 999
+Switch(config-vlan)# name Blackhole
+----------------------------------------------------------------------------------------------------
+Step 3: Map Active Users to Active Ports
+Assume our legitimate users are physically patched into ports Fa0/1 through Fa0/12:
+Switch0(config)# interface range fastEthernet 0/4-6
+Switch0(config-if-range)# switchport mode access
+Switch0(config-if-range)# switchport access vlan 30
+**"Follow the same method to assign the remaining ports to their respective VLANs."
+---------------------------------------------------------------------------------------------------
+Step 4: The Double-Lock Down on Unused Ports
+Assume ports Fa0/13 through Fa0/24 are currently vacant. We execute a powerful double-security measure:
+Switch(config)# interface range fastEthernet 0/13 - 24
+Switch(config-if-range)# switchport mode access
+Switch(config-if-range)# switchport access vlan 999
+Switch(config-if-range)# shutdown
+
+Switch(config)# interface range GigabitEthernet 0/13 - 24
+Switch(config-if-range)# switchport mode access
+Switch(config-if-range)# switchport access vlan 999
+Switch(config-if-range)# shutdown
+
+💡 Why Both? (VLAN 999 + Shutdown)
+ If an administrator only types shutdown, a clever attacker who gains unauthorized physical access to the console port, or leverages a software exploit, can turn the interface back on (no shutdown). If left in default settings, that port instantly reactivates inside VLAN 1, granting network entry.
+By explicitly stripping the port away to VLAN 999 before applying shutdown, you create a secondary cage. Even if the port is accidentally enabled or hacked open, the attacker lands inside an isolated "blackhole" bubble where they cannot see or communicate with any device on the network.
+-------------------------------------------------------------------------------------------------------------------------------------
+Step 5:Hardening Trunk Links (Restricting the Blackhole)
+By default, Cisco trunk links allow all VLANs (1 to 4094) to pass across switch-to-switch links. To ensure that malicious or rogue traffic generated inside the blackhole never propagates across our network core, we explicitly prune it from our trunks:
+
+"*Note: The Link Aggregation Control Protocol (LACP) is configured to bundle the links between the switches.*"
+
+Switch(config)# interface port-channel 1
+Switch(config-if)# switchport mode trunk
+Switch(config-if)# switchport trunk allowed vlan remove 999
+
+This command permanently deletes VLAN 999 from the allowed transit list, containing any potential layer-2 breach locally.
+-----------------------------------------------------------------------------------------------------------------------------------
+Step 6:Verification & Attack Simulation Testing
+Switch0# show interfaces trunk
+
+Verify under the Vlans allowed on trunk row that your production VLANs are listed, but VLAN 999 is explicitly missing.
+
+
+Simulating the Attack:
+In Cisco Packet Tracer, introduce a new machine labeled Hacker-PC.
+
+Connect a copper straight-through cable from the Hacker-PC into the unused switch port Fa0/6.
+
+Expected Result:
+The link connectivity dots will remain Solid Dark Red 🔴.
+
+The interface status inside the switch remains administratively down.
+
+Even if you manually type no shutdown on Fa0/6 for testing, the Hacker-PC will attempt to send packets but will experience 100% Packet Loss because it is trapped in the unrouted Blackhole VLAN 999.
+
+Your Layer 2 environment is now structurally secure against rogue physical connections!
+
+
+
+
+
+
+
+
+
+
+
+
 
