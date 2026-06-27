@@ -72,7 +72,10 @@ showing exactly how the switch behaves under different security environments.
   I plugged a cable from Switch2 into Switch3, while Switch3 was pre-configured 
   with a manipulative priority of 0 (trying to steal the Root throne).
   
-* The Result (Image_9a4a7a.png): 
+* The Result: 
+![BPDU Guard Collapse](STP-Attack-Prevention-1.png)
+*Figure 1: BPDU Guard Violation & 'err-disable' Interface Collapse*
+
   The interface immediately collapsed! The switch generated this security error:
   "%SPANTREE-2-BLOCK_BPDUGUARD: Received BPDU on port FastEthernet0/3... Disabling port."
   "%ERR_DISABLE: bpduguard error detected on 0/3, putting 0/3 in err-disable state."
@@ -95,6 +98,9 @@ showing exactly how the switch behaves under different security environments.
   `spanning-tree guard root`
   
 * The Result: 
+![Root Guard Success](STP-Attack-Prevention-2.png)
+*Figure 2: Proactive Design Success & Root Guard Active Mitigation*
+
   This time, the interface stayed up and operating successfully! The switch triggered 
   this smart alert:
   "%SPANTREE-2-ROOTGUARDBLOCK: Port 0/4 tried to become non-designated in VLAN 1."
