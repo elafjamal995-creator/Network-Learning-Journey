@@ -1,5 +1,17 @@
 ### STP Portfast, BPDU Guard, Root Guard Configuration | STP Attacks Prevention ###
 
+
+
+## Network Topology Overview
+Here is the complete network topology designed and secured in Cisco Packet Tracer:
+
+![STP Attack Prevention Topology](STP-Attack-Prevention.jpg)
+
+*Figure: Full Enterprise Network Topology securing Core Bridges against Rogue Switches using PortFast, BPDU Guard, and Root Guard.*
+
+---
+
+
 1. Draw necessary topology, decorate and comment
 2. Identify trunk and configure them.N/B -- IDENTIFY ROOT BRIDGE FIRST
 3. Identify non-trunk ports or access ports (on sw0&sw1) and configure them with portfast and BPDU guard.
