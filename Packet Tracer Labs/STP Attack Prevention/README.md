@@ -5,7 +5,7 @@
 ## Network Topology Overview
 Here is the complete network topology designed and secured in Cisco Packet Tracer:
 
-![STP Attack Prevention Topology](STP-Attack-Prevention.jpg)
+![STP Attack Prevention Topology](STP-Attack-Prevention.png)
 
 *Figure: Full Enterprise Network Topology securing Core Bridges against Rogue Switches using PortFast, BPDU Guard, and Root Guard.*
 
