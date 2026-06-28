@@ -5,7 +5,6 @@
 3. Enable IP ARP Inspection on the current VLAN used.
 4. Configure trusted ports for IP ARP Inspection.
 5. Configure IP verify source for untrusted ports.
-==========================================================================================================================================================
 
 ## 1. Executive Summary & Philosophy
 
@@ -42,9 +41,10 @@ The established network design below illustrates the local VLAN architecture, pa
 
 ---
 
-## 3. Core Device Configurations & Scripting
+## 3. Core Device Configurations 
 
-### Step 1: Initializing the DHCP Snooping Engine
+Step 1: Initializing the DHCP Snooping Engine
+
 First, globally activate the snooping protocol and scope it to your active production broadcast domain (VLAN 1):
 ```text
 Switch0(config)# ip dhcp snooping
@@ -77,7 +77,7 @@ Note: This command serves as your engineering dashboard.
 It displays interface trust states (Trusted vs Untrusted), rate limiting values (defaulting to 15 packets-per-second on untrusted ports to prevent DoS via ARP flooding), 
 and real-time statistics regarding dropped or forwarded frames.
 
-#The Problem :
+#The Problem : 
 When attempting to apply IP Source Guard directly to the untrusted client access scopes (such as interface range fa0/3-24, gig0/1-2) using the standard command:
 
 Switch0(config-if-range)# ip verify source
