@@ -2,7 +2,7 @@
 ## Network Topology Overview
 Here is the complete network topology designed and secured in Cisco Packet Tracer:
 
-![VLAN Hopping Attacks Prevention & Layer 2 Security Hardening Topology](STP-Attack-Prevention.png)
+![VLAN Hopping Attacks Prevention & Layer 2 Security Hardening Topology](VLAN-Hoping-Attacks-Prevention.png)
 
 *Figure: Full Enterprise Network Topology VLAN Hopping Attacks Prevention & Layer 2 Security Hardening.*
 
