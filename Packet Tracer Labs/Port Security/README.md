@@ -110,7 +110,7 @@ Alternatively, to view the live dashboard summarizing all configured ports, acce
 Switch1# show port-security
 ```
 ------------------------------------------------------------------------------------------------------------------------------------------------------
-### Engineering Discovery 1: Troubleshooting Empty CAM Tables
+### Troubleshooting Empty CAM Tables
 During lab verification, executing the standard show mac-address table command initially reveals an empty or incomplete table, displaying only the statically/manually assigned hosts.
 
 Core Root Cause
@@ -119,8 +119,10 @@ Cisco switches learn MAC addresses passively by examining the source field of in
 Correct Engineering Solution
 To actively populate the database and bind the ports, an administrative sweep must be simulated. Forcing the client machines to generate traffic—such as initiating a standard ICMP network Ping across the subnet—forces the frames out, building the secure MAC address architecture instantly across the table.
 
+![NOTE about Troubleshooting Empty CAM Tables ](note-test.png)
+
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
-###  Engineering Discovery 2: IP Spoofing vs. Hardware MAC Validation
+### IP Spoofing vs. Hardware MAC Validation
 During the final phase of validation, a critical security experiment was conducted to verify the precision of Port Security boundaries when dealing with Layer 3 identity spoofing.
 
 The Attack Scenario
@@ -130,9 +132,13 @@ Hacker-PC Static Configuration:
 IP Address: 192.168.1.5
 Subnet Mask: 255.255.255.0
 ```
+![NOTE about IP address matching ](ip-test.png)
+
 The Link Relocation Test:
 
 The link cable from the legitimate PC4 host was physically unplugged, and the Hacker-PC was connected directly into the newly modified topology port Fa0/5 (which was explicitly secured under Batch 3 with Manual binding to PC4's genuine MAC address).
+
+![Test-topology](test-topology.png)
 
 Penetration Results and Analysis:
 
@@ -144,9 +150,7 @@ This experiment proves that Port Security operates strictly at Layer 2 (Data Lin
 
 Since Fa0/5 was running in Protect mode, the switch maintained an Up/Up operational link state, but silently dropped 100% of the hacker's packets at the hardware ASIC layer without generating log overhead or disabling the connection. Layer 3 IP spoofing is completely useless against Layer 2 hardware authentication.
 
-
-
-
+![Test-topology](faild-test.png)
 
 
 
