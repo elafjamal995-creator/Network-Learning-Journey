@@ -111,6 +111,9 @@ C:\> ssh -l elaf 192.168.2.6
 ```
 The switch evaluates the packet source IP against Access List 10, triggers the implicit deny rule, and drops the connection frame at the boundary before even presenting a login prompt.
 
+![VTY ACL Lab Test ](test1.png)
+
+
 Test 2: Authorized SysAdmin Connection (PC4)
 When the verified SysAdmin-PC (PC4 with IP 192.168.1.5) initiates the exact same command across the router, the switch matches the permit host criteria and allows the traffic through
 
@@ -120,6 +123,7 @@ Password:
 ```
 The session successfully opens, proving that management access is tightly locked down to authorized administrative infrastructure terminals.
 
+![VTY ACL Lab Test ](test2.png)
 
 
 
