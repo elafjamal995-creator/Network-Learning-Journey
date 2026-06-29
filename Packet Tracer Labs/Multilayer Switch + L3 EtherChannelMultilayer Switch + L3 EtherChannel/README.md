@@ -1,6 +1,6 @@
 # Enterprise Multilayer Switching: Layer 3 Operations & Routing
 
-1. Draw necessary topology, decorate and comment --- choose 3650 13sw
+1. Draw necessary topology, decorate and comment --- choose 3650 L3sw
 
 2. Power on the Multilayer switches.
 
@@ -14,6 +14,7 @@
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # 1. Introduction: What is a Multilayer Switch (MLS)?
+![Network Topology](TOPOLOGY.png)
 
 ### Concept
 
@@ -80,9 +81,9 @@ Switch(config-if)# no shutdown
 ## Verification Results
 After configuration, we verify the L3 routing path using the ICMP (Ping) utility.
 
-Switch 0 Connectivity:
+Switch 0 Connectivity: ![Switch 0 Connectivity test](TEST0.png)
 
-Switch 1 Connectivity:
+Switch 1 Connectivity: ![Switch 1 Connectivity test](TEST1.png)
 
 # 5. Notes
 ### Security Integration:
