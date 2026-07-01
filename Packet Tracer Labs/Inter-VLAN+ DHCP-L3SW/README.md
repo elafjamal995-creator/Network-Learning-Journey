@@ -54,19 +54,19 @@ Switch(config-if)# no shutdown
 Configure a DHCP pool to automate IP distribution for your clients:
 ```bash
 # 1. Create the DHCP pool
-Switch(config)# ip dhcp pool IT-POOL
+Switch(config)# ip dhcp pool IT-DEPT
 Switch(dhcp-config)# network 192.168.10.0 255.255.255.0
 Switch(dhcp-config)# default-router 192.168.10.1
 Switch(dhcp-config)#dns-server 8.8.8.8
 
 
-Switch(config)# ip dhcp pool HR-POOL
+Switch(config)# ip dhcp pool HR-DEPT
 Switch(dhcp-config)# network 192.168.20.0 255.255.255.0
 Switch(dhcp-config)# default-router 192.168.20.1
 Switch(dhcp-config)#dns-server 8.8.8.8
 
 
-Switch(config)# ip dhcp pool FIN-POOL
+Switch(config)# ip dhcp pool FIN-DEPT
 Switch(dhcp-config)# network 192.168.30.0 255.255.255.0
 Switch(dhcp-config)# default-router 192.168.30.1
 Switch(dhcp-config)#dns-server 8.8.8.8
