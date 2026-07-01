@@ -20,10 +20,10 @@ An SVI is a logical interface that acts as the Default Gateway for a specific VL
 To successfully deploy this, we followed a logical order to ensure network stability:
 
 ### Access Layer Setup (L2 Switch): Configure VLANs and assign access ports to end-devices.
-![Inter-VLAN Routing Diagram](top.png)
 
 ### Trunking: Establish a trunk link between the L2 and L3 switches to allow inter-VLAN traffic.
 ![switch Diagram](sw-conf.png)
+
 ![switch Diagram](sw-conf-(2).png)
 
 ### Core Routing Setup (L3 Switch):
@@ -33,7 +33,7 @@ To successfully deploy this, we followed a logical order to ensure network stabi
 * Create SVIs for each VLAN: interface vlan [ID].
 
 * Assign IP addresses (Gateways).
-![L3 Diagram](config-(2).png)
+![L3 Diagram](config.png)
 
 ## Note:
 Always define all VLANs on the L3 switch, even if they are physically connected to an L2 switch downstream. The L3 switch must know about every VLAN to provide a gateway for them.
@@ -105,13 +105,13 @@ In enterprise design, we rarely connect all users directly to the L3 Switch. We 
 2- Cable Management: We aggregate user connections at the L2 level and run a single trunk cable to the L3 core.
 
 3- Fault Isolation: If a "Broadcast Storm" occurs in a specific office, the L2 switch isolates the impact, protecting the Core L3 switch.
-# 9. 6. Validation & Verification: 
+# 9.Validation & Verification: 
 After configuring your Layer 3 Switch and VLANs, you must verify the connectivity
 ![L3 Diagram](final-test.png)
 
 * Check Status: Run `show ip interface brief` on the L3 Switch. All SVIs and physical ports should show up/up
 
-![L3 Diagram](test-L3.png)
+![L3 Diagram](teat-L3.png)
 
 
 
