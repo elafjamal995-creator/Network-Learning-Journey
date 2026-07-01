@@ -119,8 +119,8 @@ Why L3SW? It provides wire-speed routing, eliminates bottlenecks by keeping traf
 `no switchport` Command: Remember, this command is not required when using SVIs for Inter-VLAN routing. It is only necessary if you are manually converting a physical interface into a dedicated L3 "Routed Port" (e.g., to connect directly to an ISP or Firewall).
 
 ## 6.Test communication
-![Inter-VLAN Routing via SWL3](TEST1.png)
-![Inter-VLAN Routing via SWL3](TEST2.png)
+![Inter-VLAN Routing via SWL3](TEST-(1).png)
+![Inter-VLAN Routing via SWL3](TEST-(2).png)
 
 
 
