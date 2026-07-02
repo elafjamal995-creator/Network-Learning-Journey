@@ -62,7 +62,7 @@ On the client PC, run the following command in the Command Prompt to confirm the
 ipconfig /renew
 ipconfig /all
 ```
-[topology](test.png)
+[test](test.png)
 
 ## Key Benefits
 * Centralization: You can manage all your IP scopes from a single central DHCP Server for the entire enterprise.
