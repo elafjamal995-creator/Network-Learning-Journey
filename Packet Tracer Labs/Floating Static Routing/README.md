@@ -14,7 +14,7 @@ N/B Make sure to configure backward route to use the IP add of the next hop.
 7. Traceroute the path from A-LAN to B-LAN
 8. Disable the primary path and test communication, ping tracert
 
-![Network Topology](topology.png) 
+![Network Topology](toplogy.png) 
 
 # Advanced Lab: Floating Static Routing (Network Resilience)
 
@@ -58,7 +58,7 @@ To configure a backup path to network `192.168.20.0/24`:
 2. **Failure Simulation:** Administratively shut down the interface of the primary link (`shutdown`).
 3. **Verification:** Run `show ip route` again. You will see the primary route disappear and the **Floating Route (AD 10)** immediately appear and take over the traffic.
 4. **Restoration:** Turn the primary interface back on (`no shutdown`). The Floating Route will automatically disappear from the table as the primary route resumes control.
-![Network Topology](floating-top.png) 
+![Network Topology](floating-topology.png) 
 ![Network Topology](float-test.png) 
 ![Network Topology](float-test-2.png) 
 
@@ -71,7 +71,7 @@ To configure a backup path to network `192.168.20.0/24`:
 * Verification: Run tracert again. The traffic should automatically shift to the backup path.
 
 * Recovery: Re-enable the interface (no shutdown). The primary path should reclaim priority immediately.
-![Network Topology](test-fali.png) 
+![Network Topology](test-fail.png) 
 ![Network Topology](no-floating.png) 
   
 
