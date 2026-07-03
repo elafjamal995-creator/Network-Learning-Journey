@@ -49,21 +49,7 @@ To configure a backup path to network `192.168.20.0/24`:
 `Router(config)# ip route 192.168.20.0 255.255.255.0 [Backup_Next_Hop_IP] 10`
 *(Setting AD to 10 makes it the backup)*
 
-
-
----
-
-## 4. Verification & Testing
-1. **Initial State:** Run `show ip route`. You will only see the primary static route.
-2. **Failure Simulation:** Administratively shut down the interface of the primary link (`shutdown`).
-3. **Verification:** Run `show ip route` again. You will see the primary route disappear and the **Floating Route (AD 10)** immediately appear and take over the traffic.
-4. **Restoration:** Turn the primary interface back on (`no shutdown`). The Floating Route will automatically disappear from the table as the primary route resumes control.
-![Network Topology](floating-topology.png) 
-![Network Topology](float-test.png) 
-![Network Topology](float-test-2.png) 
-
----
-## Testing Failover
+## 4. Verification & Testing (Static Routing witout Floating ) and Testing Failover
 * Normal State: Run tracert. Traffic should follow the primary path.
 
 * Failure State: Shut down the primary interface (interface [id], then shutdown).
@@ -74,6 +60,18 @@ To configure a backup path to network `192.168.20.0/24`:
 ![Network Topology](test-fail.png) 
 ![Network Topology](no-floating.png) 
   
+---
+
+## 5. Verification & Testing (Floating Static Routing)
+1. **Initial State:** Run `show ip route`. You will only see the primary static route.
+2. **Failure Simulation:** Administratively shut down the interface of the primary link (`shutdown`).
+3. **Verification:** Run `show ip route` again. You will see the primary route disappear and the **Floating Route (AD 10)** immediately appear and take over the traffic.
+4. **Restoration:** Turn the primary interface back on (`no shutdown`). The Floating Route will automatically disappear from the table as the primary route resumes control.
+![Network Topology](floating-topology.png) 
+![Network Topology](float-test.png) 
+![Network Topology](float-test-2.png) 
+
+---
 
 ## 6. Security & Availability Impact
 As a security student, you must recognize that:
