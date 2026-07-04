@@ -48,16 +48,43 @@ For large networks, we move beyond Single-Area OSPF to **Multi-Area OSPF**:
     * **Containment:** If a link fails in a local area, the LSDB update is contained, preventing unnecessary SPF calculations across the entire enterprise.
     * **ABR (Area Border Router):** The specialized router that bridges different areas to the backbone.
 
-
-
 ---
 
 ## 4. Professional Configuration Template
-
+* on every router:
 ```bash
 # Enter OSPF configuration mode
-Router(config)# router ospf 1
-Router(config-router)# router-id 1.1.1.1
+Router(config)# router ospf 10
+Router(config-router)# router-id [router-id]
+Router(config-router)# network [IP] [Wildcard] area [Area_ID]
 
-# Advertise with precision: network [IP] [Wildcard] area [Area_ID]
-Router(config-router)# network 192.168.1.0 0.0.0.255 area 0
+* on Area Border Router:
+Router(config)# router ospf 10
+Router(config-router)# router-id 4.4.4.4
+Router(config-router)# network 10.10.10.0 0.0.0.3 area 2
+Router(config-router)# network 10.10.10.4 0.0.0.3 area 1
+Router(config-router)# network 10.10.10.8 0.0.0.3 area 0
+```
+![Network Topology](test-1.png) 
+
+
+## 5. Troubleshooting:
+When you face `Destination host unreachable`:
+
+* Neighbor Audit: `show ip ospf neighbor`. Is the status FULL?
+
+* LSDB Audit: `show ip ospf database`. Do you see reports from other routers?
+
+* Routing Table Audit: `show ip route`. Look for the 'O' flag.
+
+* Physical Audit: Verify that physical interfaces are `Up/Up`.
+
+## 6. Traceroute the path and ping the hosts
+![Network Topology](test-2.png) 
+![Network Topology](test-3.png) 
+
+## 7. Conclusion:
+A professional engineer understands why a protocol works, not just how to type the commands. By mastering the LSDB (common map), Wildcard Precision (security), and Multi-Area Hierarchy (scalability), you ensure a stable, robust, and industry-standard network architecture.
+
+
+
