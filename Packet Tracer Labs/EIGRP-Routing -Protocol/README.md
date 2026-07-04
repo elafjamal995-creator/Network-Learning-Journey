@@ -5,7 +5,7 @@
 3. Configure default EIGRP in all the routers to advertise the directly connected network
 4. Traceroute the path and ping the hosts.
 ----------------------------------------------------
-![Network Topology](topology -1.png) 
+![Network Topology](topology-1.png) 
 
 # 1. Concept: Why EIGRP?
 EIGRP (Enhanced Interior Gateway Routing Protocol) is a Cisco-proprietary hybrid protocol. It is engineered for fast convergence and high efficiency. Unlike RIP, it does not broadcast the whole routing table periodically; it only sends updates when a change occurs.
