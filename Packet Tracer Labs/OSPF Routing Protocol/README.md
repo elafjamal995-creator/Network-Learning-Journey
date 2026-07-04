@@ -21,7 +21,6 @@ Unlike Distance-Vector protocols that rely on "neighbor gossip," OSPF builds an 
 3. **SPF Tree (Dijkstra Algorithm):** The "Mathematical Path." The router uses the **Dijkstra algorithm** to place itself at the center of its map and calculate the fastest path (lowest cost) to every destination.
 
 
-
 ---
 
 ## 3. Engineering Best Practices
@@ -34,6 +33,13 @@ Never use `network` commands blindly. We use **Wildcard Masks** to enforce **Gra
 ### Hierarchy: The Role of Area 0
 - OSPF is hierarchical. All traffic between different network areas must flow through **Area 0 (The Backbone)**. This prevents routing loops and ensures stability.
 
+### The Router-ID: The Router's Digital Identity
+In OSPF, the router-id is the unique "ID card" of the router.
+
+* Why it matters: Because OSPF builds a map (LSDB), it needs a way to uniquely identify each node. Without a stable router-id, if a physical interface (that the router was using as an ID) goes down, the router's identity would change, forcing the entire network to recalculate its map (Re-convergence), which causes temporary network instability.
+
+* Best Practice: Always set the router-id manually (e.g., router-id 1.1.1.1). This ensures the router’s identity remains constant, regardless of physical interface status, keeping your network map rock-solid.
+ 
 ---
 
 ## 4. Configuration Template
