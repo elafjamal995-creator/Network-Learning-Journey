@@ -30,6 +30,7 @@ Router(config-router)# no auto-summary
 Router(config-router)# network 192.168.1.0 0.0.0.255
 Router(config-router)# network 10.10.10.0  0.0.0.3
 Router(config-router)# network [IP] [Wildcard]
+Router(config-router)#no auto-summary
 ```
 # 4. Verification & Troubleshooting
 1- Neighbor Audit: Run show ip eigrp neighbors. This command verifies the "trust relationship" between your routers.
