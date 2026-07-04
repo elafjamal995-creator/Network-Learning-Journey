@@ -55,8 +55,8 @@ When faced with Destination host unreachable:
 2-LSDB Audit: `show ip ospf database`. Do you see entries from other routers? If not, the LSA "flooding" is blocked.
 
 3-Routing Table Audit: `show ip route`. Look for the 'O' flag. If it's missing, the network isn't being learned.
-![Network Topology](test-1.jpg)
-![Network Topology](test-2.jpg) 
+![Network Topology](test-1.png)
+![Network Topology](test-2.png) 
 
 ### OSPF vs. EIGRP: The Final Comparison
 
