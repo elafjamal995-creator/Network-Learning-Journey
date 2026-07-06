@@ -9,7 +9,7 @@
 
 # Network Security: Securing Remote Access (VTY ACLs)
 
-![Network Topology](top.png)
+![Network Topology](TOP.png)
  
 This guide documents the implementation of **VTY (Virtual Terminal) Access Control Lists**. While standard ACLs protect data traffic, VTY ACLs are essential for securing the "Control Plane"—restricting who can remotely manage the network device itself (via SSH or Telnet).
 
