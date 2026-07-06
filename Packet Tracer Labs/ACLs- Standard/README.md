@@ -8,7 +8,7 @@
 6. Try again to ping the servers from IT and HR depts.
 ---------------------------------------------------------------------------------------
 
-![Network Topology](topology.jpg) 
+![Network Topology](topology.png) 
 
 This repository documents the architectural design, routing protocols, and security implementation for the current lab project. It reflects a professional approach to building scalable and secure enterprise networks.
 
