@@ -11,6 +11,15 @@
 
 This guide documents the implementation of **Static NAT (Network Address Translation)** and the corresponding security layer using **Extended ACLs**. Static NAT provides a permanent one-to-one mapping between a private internal IP and a public IP, essential for hosting services like Web Servers.
 
+
+![Network Topology](TOP.png)
+
+## * Ping the Google server, traceroute the paths, and check if there are any translations.
+
+![Network Topology](test.png)
+
+![Network Topology](no-nat.png)
+
 ---
 
 # 1. The Engineering Concept
@@ -38,6 +47,7 @@ Router(config-if)# ip nat inside
 Router(config)# interface gig0/1
 Router(config-if)# ip nat outside
 ```
+![Network Topology](with-nat.png)
 
 ## Step 3:The Security Layer: Perimeter ACL
 Exposing a server via NAT is a security risk. To protect the server, we apply an Extended ACL on the outside interface to permit only authorized traffic.
@@ -71,4 +81,8 @@ If the table is empty, your NAT mapping is not functioning. Check your interface
 ## Conclusion:
 Static NAT is a powerful tool, but it essentially removes the "shield" of private addressing. By combining it with an Extended ACL, we successfully bridge the need for public accessibility with the necessity of robust perimeter security.
 
+
+## * Ping again, traceroute the paths, and check if there are any translations ..
+
+![Network Topology](test-1.png)
 
