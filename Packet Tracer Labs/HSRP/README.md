@@ -98,7 +98,7 @@ During verification, it was observed that return traffic paths shifted dynamical
 
 * Validation:`Ping` the remote network; notice seamless continuity in connectivity.
 
-## Disconnect link through the Active Router and Ping and traceroute from A to B again
+## 6. Disconnect link through the Active Router and Ping and traceroute from A to B again
 ![Network Topology](disconect-top.png)
 ![Network Topology](test-after-disconect.png)
 
