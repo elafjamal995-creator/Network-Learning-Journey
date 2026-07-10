@@ -34,3 +34,14 @@ The Netflix service includes servers for storage, billing systems, and client ap
 
 ## Key Takeaway for Professionals
 When discussing these concepts with peers or instructors, always emphasize **interoperability**. Open protocols like HTTP are the backbone of the internet, allowing different software and hardware to "speak the same language" regardless of who manufactured them.
+
+## . Key Network Applications (Study Roadmap)
+Rather than studying every internet application, we focus on five pervasive applications that demonstrate different networking concepts:
+
+1. **The Web (HTTP):** The ideal starting point due to its popularity and straightforward, easy-to-understand protocol.
+2. **Electronic Mail (E-mail):** The Internet's "killer application." It is more complex than the Web because it utilizes multiple application-layer protocols simultaneously.
+3. **DNS (Directory Service):** A core functionality that translates hostnames to IP addresses. It illustrates how essential network functions can be implemented at the application layer.
+4. **P2P File Sharing:** Introduces a decentralized model where devices communicate directly with one another, moving beyond the client-server paradigm.
+5. **Video Streaming:** Highlights the challenges of large-scale data distribution and the use of Content Distribution Networks (CDNs).
+
+---
