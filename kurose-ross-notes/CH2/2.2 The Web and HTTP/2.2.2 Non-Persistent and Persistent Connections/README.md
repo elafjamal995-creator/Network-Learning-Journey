@@ -165,10 +165,129 @@ This document explains how browsers optimize the slow nature of non-persistent c
 ## Summary for Engineers
 While parallel connections effectively hide the latency of non-persistent connections, they still consume more system resources (more sockets = more memory/CPU usage on both client and server). This is a classic "Performance vs. Resource Usage" trade-off.
 
+# Network Performance Analysis: Latency and Connection Lifecycle
 
+This document provides a deep dive into calculating web page response time, focusing on RTT, TCP handshakes, and the performance impact of non-persistent connections.
 
+---
 
+## 1. Defining Performance Metrics
+### Back-of-the-envelope Calculation
+* **The Goal:** To estimate the total time elapsed from the moment a client requests a base HTML file until the entire file is received.
+* **The Definition of RTT (Round-Trip Time):** RTT is the time it takes for a small packet to travel from the client to the server and back to the client.
+* **Engineering Context:** If a client is geographically distant from the server, RTT increases, making the initial connection handshake significantly slower. We use RTT as our fundamental "unit of measurement" for network performance.
 
+### RTT vs. TTL (Ping Diagnostics)
+When using the `ping` utility, it is critical to distinguish between these two values:
+* **RTT (displayed as `time`):** Measures the round-trip latency in milliseconds (ms). It indicates the speed and responsiveness of the connection.
+* **TTL (Time To Live):** Measures the number of router "hops" a packet is allowed to take. It prevents packets from looping infinitely in the network. Every router decrements the TTL by 1.
+
+---
+
+## 2. Components of Network Delay
+The total RTT is not just "travel time"; it is the sum of three distinct delays:
+1. **Packet-propagation delay:** The time required for physical signal travel.
+2. **Packet-queuing delay:** Time spent waiting in buffers at intermediate routers/switches.
+3. **Packet-processing delay:** Time spent by routers inspecting packet headers to determine the next destination.
+
+---
+
+## 3. The 2-RTT Response Time Model
+When a user clicks a hyperlink, the browser initiates a TCP connection.
+
+### The Three-Way Handshake
+1. **Client to Server (SYN):** Request to initiate a connection.
+2. **Server to Client (SYN-ACK):** Server acknowledgment.
+3. **Client to Server (ACK + HTTP Request):** The client sends the final handshake acknowledgment **combined** with the HTTP request message.
+
+### Piggybacking (The "Merge" Trick)
+* **What is it?** TCP allows us to "piggyback" the HTTP request message onto the final ACK packet of the three-way handshake.
+* **Why it matters?** Instead of waiting for a separate RTT for the request, we merge it into the connection phase. This saves network bandwidth and reduces latency.
+
+### The Response Time Equation
+Total response time is roughly calculated as:
+$$\text{Total Time} \approx 2 \times \text{RTT} + \text{Transmission Time (at the server)}$$
+* **RTT 1:** The Handshake + Request cycle.
+* **RTT 2:** The server's response returning the HTML file.
+
+---
+
+## 4. The Non-Persistent Connection Penalty
+In a non-persistent connection model (HTTP/1.0), each object requires a new TCP connection:
+* **Per-Object Cost:** Each object consumes `(2 RTT + Transmission Time)`.
+* **The Multiplier Effect:** For a page with 1 base HTML file and 10 JPEG images (11 total objects):
+  $$\text{Total Time} = 11 \times (2 \times \text{RTT} + \text{Transmission Time})$$
+
+### Engineering Conclusion
+Non-persistent connections are **non-scalable**. In modern web architecture, repeating the `2-RTT` cycle for every single small image creates massive overhead. This confirms why modern standards (Persistent Connections) are essential: they allow us to perform the `2-RTT` handshake only once per session and reuse the connection for all subsequent objects.
+
+# The Limitations of Non-Persistent Connections
+
+This document outlines why non-persistent HTTP connections are inefficient for web servers handling high traffic.
+
+## Key Shortcomings
+1. **The Overhead of New Connections:**
+   * "A brand-new connection must be established and maintained for each requested object." 
+   * This creates a cycle of constant setup and teardown for every single image or file on a page.
+
+2. **Resource Consumption (RAM/CPU):**
+   * "TCP buffers must be allocated and TCP variables must be kept in both the client and server."
+   * Every TCP connection consumes physical memory (buffers) and requires processing power to manage state variables.
+
+3. **Server Overload (Scalability):**
+   * "This can place a significant burden on the Web server, which may be serving requests from hundreds of different clients simultaneously."
+   * When hundreds of users request pages, the server spends more system resources managing TCP connections than actually delivering content.
+
+## Engineering Conclusion
+Non-persistent connections lead to **Server Congestion**. Because every object requires its own unique TCP state, the server's memory becomes bloated with variables from inactive or short-lived connections. This makes the system "non-scalable" for high-traffic environments.
+
+# The Performance Bottleneck of Non-Persistent Connections
+
+This document details the major inefficiencies of the HTTP/1.0 non-persistent model, focusing on both server-side resource exhaustion and client-side latency.
+
+## 1. The "2-RTT" Performance Tax
+* **The Claim:** "Each object suffers a delivery delay of two RTTs."
+* **The Breakdown:**
+    1. **1st RTT (Connection Setup):** Used to perform the three-way handshake and establish the TCP connection.
+    2. **2nd RTT (Data Transfer):** Used to transmit the HTTP request and receive the object response.
+* **The Engineering Reality:** This "2-RTT tax" is not paid once; it is paid for **every single object** (HTML file, image, icon, script) on the page.
+
+## 2. Integrated Engineering Analysis: The Dual Burden
+To understand the full impact of non-persistent connections, we must view the system from both the server and client perspectives:
+
+* **Server Perspective (Resource Burden):** As discussed previously, the server must allocate TCP buffers and track TCP variables for every single connection. This places a significant strain on the server's CPU and RAM, especially when handling hundreds of clients simultaneously.
+* **Client Perspective (Latency/User Experience Burden):** As described in this section, each object faces a mandatory 2-RTT delay, which significantly increases the total page load time and degrades the end-user experience.
+* **The Combined Result:** We are dealing with a system that simultaneously exhausts server resources and frustrates the user with high latency.
+
+## 3. Engineering Conclusion
+Non-persistent connections lead to a cycle of inefficiency:
+* **Server Congestion:** Memory becomes bloated with state variables from frequent connection setups/teardowns.
+* **Slow Delivery:** The mandatory 2-RTT delay acts as "Head-of-Line Blocking" at the connection level. 
+
+From a performance engineering perspective, this design is **non-scalable**, necessitating the shift to persistent connections where the handshake overhead is minimized.
+
+# HTTP/1.1 Persistent Connections: The Engineering Solution
+
+This document explains how persistent connections eliminate the inefficiencies of the non-persistent model.
+
+## Core Concept
+Unlike the non-persistent model, **Persistent Connections** keep the TCP connection open after a response is sent, allowing the same connection to be reused for subsequent object requests.
+
+## Key Improvements
+1. **Connection Reusability:**
+   * Subsequent requests/responses between the client and server use the same existing "pipe."
+2. **Page-Level Efficiency:**
+   * In our example (1 HTML + 10 images), all 11 objects travel through a **single TCP connection**.
+3. **Session-Level Persistence:**
+   * Even when moving between different pages hosted on the same server, the browser can reuse the existing connection.
+
+## Performance Impact (The Engineering Advantage)
+* **Handshake Overhead:** Reduced from 11 handshakes down to just 1 handshake.
+* **Latency Reduction:** We eliminate the "2-RTT tax" for every object after the first one.
+* **Resource Optimization:** The server no longer needs to frequently allocate/deallocate TCP buffers and variables, significantly lowering CPU and RAM utilization.
+
+## Conclusion
+Persistent connections transform HTTP from a "start-stop" protocol into a "stream" protocol, dramatically improving page load times and server scalability. This is the foundation of modern high-performance web traffic.
 
 
 
