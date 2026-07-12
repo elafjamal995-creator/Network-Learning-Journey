@@ -67,7 +67,19 @@ This document focuses on the mechanics of the HTTP Request Line, specifically th
 * **Protocol Negotiation:** By declaring the version, the client and server negotiate which protocol features (e.g., Persistent Connections, Pipelining) are active.
 * **Standardization:** Using the correct method ensures the server processes the request as intended (read vs. write/modify).
 
+# HTTP Header Lines: The Intelligence Layer
 
+Headers provide metadata that allows both the client and server to negotiate content and manage connections efficiently.
+
+## Core Header Fields
+* **`Host`:** Essential for Proxy Caches to identify the target website, even if the connection is already established.
+* **`Connection`:** A directive to the server regarding the lifecycle of the TCP connection (`close` for non-persistent, `keep-alive` for persistent).
+* **`User-agent`:** Identifies the browser type. Allows the server to perform "Content Adaptation" (e.g., serving a mobile version vs. desktop version of the same URL).
+* **`Accept-language`:** Communicates user preferences (e.g., French language version). This is a primary example of **Content Negotiation**.
+
+## Engineering Impact
+* **Scalability for Proxies:** Without the `Host` header, intermediate caches would fail to route requests correctly.
+* **Content Negotiation:** The server uses headers to deliver the optimal version of a resource without changing the URL, significantly improving user experience based on client capabilities and preferences.
 
 
 
