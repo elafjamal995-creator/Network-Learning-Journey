@@ -159,4 +159,48 @@ This document explains the composition of an HTTP response message sent from a s
 * **Efficient Processing:** By placing the Status Line at the very top, the client can instantly determine if the operation succeeded. If the code is not `200 OK` (e.g., `404 Not Found`), the client can stop processing immediately without wasting bandwidth on an empty or error-prone entity body.
 
 
+# HTTP Response Headers: The Server's Metadata
+
+This document details the header lines sent by the server, which provide critical context for the browser and proxy caches.
+
+## Header Field Reference
+| Header | Engineering Purpose |
+| :--- | :--- |
+| **Connection** | Directs the client to close or keep the TCP connection. |
+| **Date** | The timestamp of when the server generated this specific response. |
+| **Server** | Identifies the web server software (e.g., Apache). |
+| **Last-Modified** | Critical for caching; tells the client if the file content is stale. |
+| **Content-Length** | Size of the object in bytes (allows progress tracking). |
+| **Content-Type** | The "MIME type" of the data. Defines how the browser renders the content. |
+
+## Engineering Insight
+* **Caching (The Last-Modified Header):** This is the engine of web performance. By checking this against cached copies, the system prevents redundant downloads of files that haven't changed.
+* **Reliability (The Content-Type Header):** Never rely on file extensions in URLs. The `Content-Type` header is the "official" definition of the data format, ensuring the browser uses the correct engine to interpret the payload.
+
+
+
+# The HTTP Response Message Structure (Figure 2.9)
+
+This document maps the structural template of HTTP responses and defines common status codes.
+
+## 1. Message Sections
+* **Status Line:** Version, Status Code, and Phrase (e.g., `HTTP/1.1 200 OK`).
+* **Header Lines:** Server/Object metadata.
+* **Blank Line:** The delimiter (CRLF).
+* **Entity Body:** The payload (the requested object).
+
+## 2. Common Status Codes Reference
+| Code | Phrase | Meaning |
+| :--- | :--- | :--- |
+| **200** | OK | Request successful; object included in body. |
+| **301** | Moved Permanently | Resource moved; new URL provided in `Location` header. |
+| **400** | Bad Request | Server cannot interpret the request. |
+| **404** | Not Found | Resource does not exist on server. |
+| **505** | Version Not Supported | Protocol version mismatch. |
+
+## 3. Engineering Significance
+* **Client Logic:** The Status Code dictates the client's next move (e.g., automatically redirecting for `301` or stopping for `404`).
+* **Protocol Intelligence:** These codes transform simple data transfer into a robust negotiation between client and server.
+
+
 
