@@ -104,6 +104,114 @@ By viewing the resulting files:
 The experiment proves that the choice of encryption mode is as critical as the encryption algorithm itself. While AES is a strong algorithm, using it with the wrong mode (like ECB) can lead to information leakage in structured data such as images. By isolating the file header from the encrypted body, we can visualize these security properties and verify that CBC provides the expected protection against pattern analysis.
 
 
+# SEED Labs: Task 4 - Padding Analysis & Experimental Steps
+
+This report documents the step-by-step experiment performed to analyze padding in block ciphers, reflecting the actual commands executed in the lab environment.
+
+---
+
+## 1. Experimental Setup
+We started by creating a dedicated workspace on the Desktop and generating a test file to be encrypted.
+
+```bash
+# Navigate to Desktop and create a folder
+cd Desktop
+mkdir Task3
+cd Task3
+
+# Create a 4-byte test file (using -n to prevent newline characters)
+echo -n '1234' > file.txt
+```
+## 2. Pre-Encryption Verification
+Before encrypting, we check the exact size of our input file to establish a baseline for comparison.
+```text
+# Verify the file size
+1234[07/18/26]seed@VM:~/.../Task3$ wc -c file.txt
+4 file.txt
+```
+## 3. Encryption Process
+We encrypted the file using the AES-128-CBC algorithm. Note that because our file is smaller than the 16-byte block size, the system automatically applies padding.
+```text
+# Encrypt the file
+openssl enc -aes-128-cbc -e -in file.txt -out cipher1.bin -K 00112233445566778889aabbccddeeff -iv 0102030405060708
+```
+* Note: If you view the encrypted file content using cat cipher1.bin, you will see unreadable, scrambled binary data, confirming the encryption was successful.
+```text
+[07/18/26]seed@VM:~/.../Task3$ cat cipher1.bin
+�Z�����K�
+```
+## 4. Decryption & Padding Analysis
+To see the padding added by the encryption process, we perform decryption while disabling the automatic removal of padding using the `-nopad` flag.
+```text
+# Decrypt without removing padding
+openssl enc -aes-128-cbc -d -in cipher1.bin -out decrypted1_file.txt -nopad
+
+# Check the size of the decrypted file (should be 16 bytes due to padding)
+
+[07/18/26]seed@VM:~/.../Task3$ wc -c decrypted1_file.txt
+16 decrypted1_file.txt
+
+```
+| Mode | Input Size (bytes) | Output Size (bytes) | Padding Applied? |
+| :--- | :--- | :--- | :--- |
+| **ECB** | 4 | 16 | Yes |
+| **CBC** | 4 | 16 | Yes |
+| **CFB** | 4 | 4 | No |
+| **OFB** | 4 | 4 | No |
+
+## 5. Key Findings
+* Block Ciphers (ECB/CBC): These modes require data to be a multiple of the block size (16 bytes). Therefore, they apply padding automatically.
+
+* Stream Ciphers (CFB/OFB): These modes encrypt data byte-by-byte, making padding unnecessary, which is why the output size matches the input size exactly.
+
+# Tool Documentation: Analyzing Data with hexdump
+
+In this lab, we use `hexdump -C` to inspect the internal structure of our files. Since padding data often contains non-printable characters, standard text editors cannot display them correctly. This tool serves as our "microscope."
+
+---
+
+# Tool Documentation: Analyzing Data with hexdump and xxd
+
+In this lab, we use `hexdump -C` or `xxd` to inspect the internal structure of our files. Since padding data often contains non-printable characters, standard text editors cannot display them correctly. These tools serve as our "microscopes."
+
+---
+
+## 1. Available Tools
+*   **hexdump -C:** A powerful utility that displays file content in a structured hexadecimal format, with a side-by-side ASCII view.
+*   **xxd:** A highly popular alternative that performs the same function, converting any file into a readable hexadecimal representation[cite: 1].
+
+## 2. Why do we use them?
+*   **Revealing Hidden Data:** Encryption padding is often hidden from normal view. These tools allow us to see specific bytes, which are crucial for our analysis[cite: 1].
+*   **Verification:** They provide objective proof that padding was added or removed during the encryption/decryption process[cite: 1].
+
+## 3. How to use them
+You can use either command to inspect your decrypted files:
+
+```bash
+# Option 1: Using hexdump
+hexdump -C decrypted_file.txt
+
+# Option 2: Using xxd
+xxd decrypted_file.txt
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
