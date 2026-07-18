@@ -327,7 +327,41 @@ python3 attack.py
 
 * CBC vs. OFB: While we previously tested CBC to see how IVs change ciphertext, OFB was chosen here because it makes the mathematical vulnerability (Keystream re-use) much more apparent and easier to demonstrate.
 
+# Task 6.3: Common Mistake - Use a Predictable IV
+![CBC](cbc.png)
+This guide explains how a predictable Initialization Vector (IV) can compromise the security of the Cipher Block Chaining (CBC) mode.
 
+## 1. The Concept
+In CBC mode, the first block of plaintext is XORed with the IV before encryption[cite: 1]. The mathematical formula for the first ciphertext block ($C_1$) is:
+$$C_1 = E_K(P_1 \oplus IV)$$[cite: 1]
+
+For a system to be secure, IVs must be **random and unpredictable**[cite: 1]. If an IV is predictable, an attacker can perform a **Chosen-Plaintext Attack** to guess the contents of a secret message[cite: 1].
+
+## 2. The Attack Strategy (The Matching Game)
+If we know the IV used for Bob's secret message ($IV_{Bob}$) and we can predict the next IV ($IV_{Next}$), we can test our guesses for Bob's secret message ($P_{Bob}$)[cite: 1].
+
+### The Mathematical Trick
+To make our ciphertext ($C_{Mine}$) match Bob's secret ciphertext ($C_{Bob}$), we must satisfy this condition[cite: 1]:
+$$(P_{Mine} \oplus IV_{Next}) = (P_{Bob} \oplus IV_{Bob})$$[cite: 1]
+
+By rearranging the equation, we can calculate the exact plaintext ($P_{Mine}$) to send to the server:
+$$P_{Mine} = P_{Bob} \oplus IV_{Bob} \oplus IV_{Next}$$[cite: 1]
+
+## 3. Execution Steps
+1.  **Observe:** Get the secret ciphertext ($C_{Bob}$) and the IV used ($IV_{Bob}$) from the oracle[cite: 1].
+2.  **Predict:** Get the next IV ($IV_{Next}$) provided by the oracle[cite: 1].
+3.  **Guess & Calculate:** 
+    *   Assume $P_{Bob}$ is "Yes".
+    *   Calculate $P_{Mine} = "Yes" \oplus IV_{Bob} \oplus IV_{Next}$[cite: 1].
+4.  **Test:** Send $P_{Mine}$ (as a hex string) to the oracle[cite: 1].
+5.  **Verify:** 
+    *   If the resulting $C_{Mine}$ matches $C_{Bob}$, your guess "Yes" is correct[cite: 1].
+    *   If they do not match, the secret message is "No"[cite: 1].
+
+## 4. Key Takeaways
+*   **Why it works:** The attack works because CBC mode relies on the IV to randomize the first block[cite: 1]. If the IV is predictable, the randomization is broken[cite: 1].
+*   **Common Mistake:** The main error is treating the IV as a simple constant rather than a randomly generated value for every encryption session[cite: 1].
+*   **Important:** Always ensure your input to the oracle is in hex format, as the encryption oracle processes data as hex strings[cite: 1].
 
 
 
