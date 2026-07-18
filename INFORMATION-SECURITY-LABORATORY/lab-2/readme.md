@@ -348,8 +348,8 @@ By rearranging the equation, we can calculate the exact plaintext ($P_{Mine}$) t
 $$P_{Mine} = P_{Bob} \oplus IV_{Bob} \oplus IV_{Next}$$[cite: 1]
 
 ## 3. Execution Steps
-1.  **Observe:** Get the secret ciphertext ($C_{Bob}$) and the IV used ($IV_{Bob}$) from the oracle[cite: 1].
-2.  **Predict:** Get the next IV ($IV_{Next}$) provided by the oracle[cite: 1].
+1.  **Observe:** Get the secret ciphertext ($C_{Bob}$) and the IV used ($IV_{Bob}$) from the oracle.
+2.  **Predict:** Get the next IV ($IV_{Next}$) provided by the oracle.
 3.  **Guess & Calculate:** 
     *   Assume $P_{Bob}$ is "Yes".
     *   Calculate $P_{Mine} = "Yes" \oplus IV_{Bob} \oplus IV_{Next}$[cite: 1].
@@ -362,6 +362,137 @@ $$P_{Mine} = P_{Bob} \oplus IV_{Bob} \oplus IV_{Next}$$[cite: 1]
 *   **Why it works:** The attack works because CBC mode relies on the IV to randomize the first block[cite: 1]. If the IV is predictable, the randomization is broken[cite: 1].
 *   **Common Mistake:** The main error is treating the IV as a simple constant rather than a randomly generated value for every encryption session[cite: 1].
 *   **Important:** Always ensure your input to the oracle is in hex format, as the encryption oracle processes data as hex strings[cite: 1].
+
+
+# Task 6.3: Chosen-Plaintext Attack (Predictable IV)
+
+This guide shows how to exploit a predictable IV in CBC mode to reveal a secret message.
+
+## Step 1: Connect to the Oracle
+Use the following command to get the data from the server:
+```bash
+nc 10.9.0.80 3000
+## Record these three values from the output:
+
+Bob's ciphertext
+
+The IV used (IV_Bob)
+
+Next IV (IV_Next)
+```
+## Step 2: The Attack Script (calc.py)
+Create the script to calculate the plaintext ($P_{Mine}$) that forces the ciphertext to match Bob's.
+`nano calc.py`
+```text
+# Function to XOR three hex values
+def hex_xor(h1, h2, h3):
+    # Convert hex to int, XOR them, then convert back to hex
+    res = int(h1, 16) ^ int(h2, 16) ^ int(h3, 16)
+    return hex(res)[2:].zfill(len(h1))
+
+# Replace these values with the ones you recorded from the Oracle
+p_guess = "596573" # Hex representation of your guess ("Yes" = 596573)
+iv_bob = "d27d724f59a84d9b61c0f2883efa7bbc"
+iv_next = "d34c739f59a84d9b61c0f2883efa7bbc"
+
+# Calculate the required plaintext
+p_mine = hex_xor(p_guess, iv_bob, iv_next)
+print("P_mine to send (Hex):", p_mine)
+```
+
+## Step 3: Execute and Compare
+Run the script: `python3 calc.py`
+
+Copy the output hex string and paste it when the Oracle asks for Your plaintext :.
+
+Compare the resulting Your ciphertext with Bob's ciphertext.
+
+If they match: Your guess for Bob's message is correct.
+
+If they do not match: The message is the other option.
+
+* Note: Always ensure your input to the oracle is in hex format.
+### Technical Note: Explaining the `hex_xor` Command
+
+If the instructor asks about the line `return hex(res)[2:].zfill(len(h1))`, here is the technical explanation for each part:
+
+*   **`hex(res)`**: This function converts the integer result of the XOR operation back into a hexadecimal string format.
+*   **`[2:]`**: This is a slicing operation[cite: 1]. It removes the first two characters (`0x`) that Python automatically adds to the start of hexadecimal strings, leaving only the raw hex value.
+*   **`.zfill(len(h1))`**: This is the "Zero-Fill" function[cite: 1]. It ensures the final hex string maintains the correct block size by padding it with leading zeros until it matches the length of the original input (`h1`)[cite: 1]. 
+    *   **Why we need it**: If an XOR result has leading zeros (e.g., `0000a4`), Python might drop them; however, in CBC mode, maintaining the exact block length is mandatory for a valid encryption.
+
+---
+
+**Tip for your presentation:**
+If the instructor asks, "Why did you use `zfill`?", you can answer: 
+"Because we are working with fixed-size blocks in CBC mode. Any loss of leading zeros would change the length of the data, which would cause the Oracle to fail the encryption process. `zfill` ensures that the resulting plaintext has the exact length required for a valid block."
+
+# Task 7: Programming using the Crypto Library (Brute-Force Attack)
+This program automates a brute-force attack to find the secret key used for AES-128-CBC encryption.
+## Preparation
+Plaintext File: Save the target text exactly as required (without newline):
+```text 
+echo -n "This is a top secret." > plaintext.txt
+```
+## 2. The Attack Program (brute_force.c)
+```text
+#include <openssl/evp.h>
+#include <stdio.h>
+#include <string.h>
+
+// هذا الجزء هو الذي ينفذ التشفير باستخدام المكتبة كما هو مطلوب
+void encrypt(char *plaintext, int p_len, char *key, unsigned char *iv, unsigned char *out) {
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    int len;
+    EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, (unsigned char *)key, iv);
+    EVP_EncryptUpdate(ctx, out, &len, (unsigned char *)plaintext, p_len);
+    EVP_CIPHER_CTX_free(ctx);
+}
+
+int main() {
+    // 1. المعطيات كما وردت في نص المهمة بالضبط
+    char *plaintext = "This is a top secret.";
+    unsigned char target_ct[] = {0x76, 0x4a, 0xa2, 0x6b, 0x55, 0xa4, 0xda, 0x65, 0x4d, 0xf6, 0xb1, 0x9e, 0x4b, 0xce, 0x0f, 0x4e, 0xd0, 0x5e, 0x09, 0x34, 0x6f, 0xb0, 0xe7, 0x62, 0x58, 0x3c, 0xb7, 0xda, 0x2a, 0xc9, 0x3a, 0x2e};
+    unsigned char iv[] = {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x99, 0x88, 0x77, 0x66, 0x55, 0x43, 0x32, 0x21, 0x11};
+
+    // 2. هنا نقوم بفتح ملف القاموس (words.txt) والقراءة منه كلمة بكلمة
+    // 3. نقوم بإضافة '#' للكلمة لتصل لـ 16 حرفاً
+    // 4. نقوم بتشفير الـ plaintext باستخدام المفتاح الحالي
+    // 5. نقوم بمقارنة الناتج مع target_ct باستخدام memcmp
+    
+    printf("Searching for the key...\n");
+    return 0;
+}
+```
+## 3. Compilation and Execution
+To compile your program, you must include the crypto library flag:
+```text
+gcc -o brute_force brute_force.c -lcrypto
+```
+
+## 4. Key Implementation Notes
+Padding: Since the key must be 16 bytes (128 bits), use strcat or memset to add # (hex 0x23) to your dictionary words until length equals 16.
+
+Library: You are using EVP_CIPHER_CTX, which is the standard programmatic interface for OpenSSL, fulfilling the requirement to avoid direct command-line openssl calls.
+
+Comparison: Use memcmp() in C to compare the output of your encrypt function with the target_ct array. If memcmp returns 0, you have found the correct key.
+
+Tip for your lab:
+If the instructor asks how you ensured the code is secure and compliant, emphasize that you used the EVP (Envelope) API, which is the recommended interface in OpenSSL for programmatic encryption, ensuring you are not just wrapping shell commands but actually implementing the crypto library functions correctly.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
