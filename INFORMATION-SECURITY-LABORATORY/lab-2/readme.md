@@ -194,18 +194,138 @@ hexdump -C decrypted_file.txt
 # Option 2: Using xxd
 xxd decrypted_file.txt
 ```
+# Task 5: Error Propagation and Cipher Corruption
+
+This task explores how different encryption modes handle corrupted data. We intentionally introduce an error in the ciphertext to observe how it propagates during decryption.
+
+## 1. Experimental Setup
+*   **Create a 1000-byte file:** We generated a sample file using the following command:
+    ```bash
+    head -c 1000 /dev/zero > file.txt
+    ```
+*   **Encryption:** The file was encrypted using AES-128.
+*   **Corruption:** We modified the 55th byte of the ciphertext using `printf` to avoid storage issues:
+    ```bash
+    printf '\xff' | dd of=output.bin bs=1 seek=54 conv=notrunc
+    ```
+*   **Decryption:** We decrypted the corrupted file to observe the impact:
+    ```bash
+    openssl enc -aes-128-cbc -d -in output.bin -out plain.txt -K <key_hex> -iv <iv_hex>
+    ```
+
+## 2. Error Propagation Analysis
+When one bit/byte of ciphertext is corrupted, different modes react differently:
+
+*   **ECB (Electronic Code Book):** Since it processes blocks independently, corruption only ruins the specific 16-byte block where the error occurred.
+*   **CBC (Cipher Block Chaining):** Corruption ruins the current block (making it garbled) and affects the corresponding byte in the next block.
+*   **CFB & OFB (Stream-based modes):** These modes treat the block cipher as a stream. Corruption only affects the specific byte where the error occurred, without spreading to subsequent data.
+
+## 3. Comparison Table
+
+| Mode | Corruption Impact |
+| :--- | :--- |
+| **ECB** | Only the affected 16-byte block is corrupted. |
+| **CBC** | Affected block is ruined; corresponding byte in the next block changes. |
+| **CFB/OFB** | Only the specific corrupted byte is affected. |
+
+## 4. Verification and Troubleshooting
+*   **Comparing Results:** We used `diff` to confirm that the original and decrypted files differ:
+    ```bash
+    diff file.txt plain.txt
+    ```
+*   **Notes:** If `diff` returns "Binary files differ," the experiment is successful. If `diff` shows no output, verify that the corruption was saved correctly using `Ctrl+S` (in `bless`) or the `printf` command.
+*   **Key Tip:** Always use the capital `-K` flag with `openssl` to ensure the key is interpreted correctly as a hexadecimal string.
 
 
+# Task 6: Initial Vector (IV) Security and Common Mistakes
 
+This document covers our experiments regarding IV uniqueness and the risks associated with improper IV management.
 
+## 1. Core Concepts
+*   **Initialization Vector (IV):** A random value used as a "starting point" for encryption.
+*   **Uniqueness Requirement:** A fundamental rule in cryptography is that an IV must never be reused with the same key.
+*   **Security Objective:** Unique IVs ensure that the same plaintext encrypted twice results in different ciphertexts, preventing attackers from spotting patterns.
 
+## 2. Experiment 6.1: IV Uniqueness
+*   **Goal:** Demonstrate the vulnerability caused by IV reuse.
+*   **Procedure:**
+    1.  Encrypt the same plaintext file using two different IVs.
+```text
+openssl enc -aes-128-cbc -e -in file.txt -out c1.bin -K 00112233445566778889aabbccddeeff -iv 0102030405060708
+openssl enc -aes-128-cbc -e -in file.txt -out c2.bin -K 00112233445566778889aabbccddeeff -iv 0102030405060709
+```
 
+ 2.  Encrypt the same plaintext file using the exact same IV for both sessions.
 
+```text
+openssl enc -aes-128-cbc -e -in file.txt -out c3.bin -K 00112233445566778889aabbccddeeff -iv 0102030405060708
 
+openssl enc -aes-128-cbc -e -in file.txt -out c4.bin -K 00112233445566778889aabbccddeeff -iv 0102030405060708
+```
+*   **Expected Result:** You will observe that reusing the IV results in identical ciphertext, proving that the system fails to hide patterns.
 
+## 3. Experiment 6.2: Known-Plaintext Attack
+*   **The Attack Model:** An attacker knows a plaintext (P1) and its corresponding ciphertext (C1).
+*   **The Vulnerability:** If the same IV is reused, an attacker can use this known pair to decrypt other secret messages (P2) even without the key.
+*   **Stream Mode Impact:** In modes like OFB and CFB, reusing an IV allows an attacker to mathematically derive the underlying stream, making the entire encryption scheme insecure.
 
+## 4. Practical Implementation (Commands)
+# Create the README file content
+readme_content = """# Task 6.2: Known-Plaintext Attack (Practical Guide)
 
+This guide summarizes the steps taken to perform a Known-Plaintext Attack by repeating the Initialization Vector (IV).
 
+## 1. Encryption Preparation (Using OFB Mode)
+To demonstrate how re-using an IV in a stream-like cipher mode (OFB) allows for plaintext recovery, we first encrypt two files using the same key and the same IV.
+
+```bash
+# Encrypt file1.txt (P1 -> C1)
+openssl enc -aes-128-ofb -e -in file1.txt -out cipher1.bin -k 00112233445566778889aabbccddeeff -iv 0102030405060708
+
+# Encrypt file2.txt (P2 -> C2) using the SAME IV
+openssl enc -aes-128-ofb -e -in file2.txt -out cipher2.bin -k 00112233445566778889aabbccddeeff -iv 0102030405060708
+```
+## 2. Attack Script (attack.py)
+We use a Python script to extract the keystream using the known plaintext (P1) and its corresponding ciphertext (C1), then use that keystream to recover P2 from C2.
+
+Create the file:
+`nano attack.py`
+
+Paste the following code:
+```text
+#!/usr/bin/python3
+
+def xor(first, second):
+    return bytearray(x^y for x, y in zip(first, second))
+
+# Read the files
+p1 = open('file1.txt','rb').read()
+c1 = open('cipher1.bin','rb').read()
+c2 = open('cipher2.bin','rb').read()
+
+# Extract Keystream: Keystream = C1 ^ P1
+keystream = xor(c1, p1)
+
+# Recover P2: P2 = C2 ^ Keystream
+p2 = xor(c2, keystream)
+
+print("The recovered content of P2 is:")
+print(p2.decode('utf-8', errors='ignore'))
+```
+
+## 3. Execution
+Run the attack:
+```text
+python3 attack.py
+```
+![test](test.png)
+
+## 4. Key Takeaways for Lab Discussion
+* Why OFB? We used OFB mode because it functions as a Stream Cipher. It clearly demonstrates that the IV is meant to ensure uniqueness; re-using it compromises the Keystream.
+
+* The Vulnerability: The security of stream ciphers relies on the keystream never being repeated. If the IV and Key are the same, the keystream is the same, making the ciphertext vulnerable to simple XOR attacks.
+
+* CBC vs. OFB: While we previously tested CBC to see how IVs change ciphertext, OFB was chosen here because it makes the mathematical vulnerability (Keystream re-use) much more apparent and easier to demonstrate.
 
 
 
