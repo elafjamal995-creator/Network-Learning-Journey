@@ -13,9 +13,13 @@ $docksh <id>
 # 3 Task1:Frequency Analysis
 
 cd ~/Desktop/Labsetup/Files
+
 ./freq.py
+
 tr 'vgapnbrtmwsicuxeohqyzflkdj' 'abcdefghijklmnopqrstuvwxyz' < ciphertext.txt > output.txt
+
 cat output.txt
+
 
 # Task2:  Encryption using Different Ciphers and Modes
 cd ..
