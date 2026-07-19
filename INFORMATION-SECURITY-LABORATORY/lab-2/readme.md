@@ -1,10 +1,17 @@
 # 2 Lab Environment
 cd ~/Desktop
+
 cd Labsetup
+
+
 $docker-composebuild           #Buildthecontainerimage
+
 $docker-composeup           #Startthecontainer
+
 $docker-composedown        #Shutdownthecontainer
+
 $dockps
+
 $docksh <id>
 
 * Note:If a docker command requires a container ID ,you do not need to type the entire ID string .Typing the first few characters will be sufficient ,as long as they are unique among all the containers.
@@ -148,7 +155,7 @@ openssl enc -aes-128-cbc -e -in file.txt -out cipher1.bin -K 0011223344556677888
 To see the padding added by the encryption process, we perform decryption while disabling the automatic removal of padding using the `-nopad` flag.
 ```text
 # Decrypt without removing padding
-openssl enc -aes-128-cbc -d -in cipher1.bin -out decrypted1_file.txt -nopad
+openssl enc -aes-128-cbc -d -in cipher1.bin -out decrypted1_file.txt -nopad -K 00112233445566778889aabbccddeeff -iv 0102030405060708
 
 # Check the size of the decrypted file (should be 16 bytes due to padding)
 
