@@ -165,6 +165,228 @@ MD5 operates on 64-byte blocks iteratively using a compression function $f$:
 3. When suffix $T$ is appended, the compression function processes $T$ starting from this identical intermediate state ($\text{IHV}_M = \text{IHV}_N$).
 4. Therefore, the resulting final hash $\text{IHV}_{final}$ must be identical for both $M \parallel T$ and $N \parallel T$.
 
+# SEED Labs – MD5 Collision Attack (Task 3)
+
+This guide provides a step-by-step walk-through for **Task 3** of the SEED Labs MD5 Collision Attack. The goal is to generate two different executable programs that produce different outputs but share the exact same MD5 hash.
+
+---
+
+## Step 1: Create a Working Directory
+Create a dedicated folder for this task to keep all generated files organized.
+
+```bash
+mkdir md5_task3 && cd md5_task3
+```
+## Step 2: Create the C Source File
+Create `main.c` using the` nano `text editor and fill the xyz array with 200 'A' characters (0x41 in Hex)
+
+`nano main.c`
+Paste the following C code inside main.c:
+```text
+#include <stdio.h>
+
+// Array filled with 200 'A' characters (0x41 in Hex)
+unsigned char xyz[200] = {
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A'
+};
+
+int main() {
+    int i;
+    for (i = 0; i < 200; i++) {
+        printf("%02x", xyz[i]);
+    }
+    printf("\n");
+    return 0;
+}
+```
+* (To save in nano: press Ctrl + O, then Enter, then exit with Ctrl + X)
+## Step 3: Compile the C Program
+Compile main.c using gcc to generate the binary executable file named program.
+`gcc main.c -o program`
+## Step 4: Find the Offset of the Array
+Find the starting byte location of the xyz array in the compiled binary.
+```text
+grep -a -b -o "AAAAAAAAAAAAAAAA" program | head -n 1
+```
+* Example Output: 3040:AAAAAAAAAAAAAAAA
+
+* Note down the number before the colon (e.g., 3040).
+
+## Step 5: Extract the PrefixSelect
+Extract the PrefixSelect a byte size greater than the starting offset (e.g., 3072) that is a multiple of 64 ($3072 \div 64 = 48$). Extract the prefix up to that point.
+```text
+head -c 3072 program > prefix
+```
+## Step 6: Generate Collision Blocks
+Run `md5collgen` on the prefix to generate two files (out1.bin and out2.bin) containing the prefix and a unique 128-byte block each.
+```text
+md5collgen -p prefix -o out1.bin out2.bin
+```
+## Step 7: Extract the SuffixExtract 
+Extract the SuffixExtract the remaining part of the original binary starting right after the prefix + 128 bytes ($3072 + 128 + 1 = 3201$).
+```text
+tail -c +3201 program > suffix
+```
+## Step 8: Merge the Files to Create Final Executables
+Combine the collision output files with the suffix to create prog1 and prog2.
+```text
+cat out1.bin suffix > prog1
+cat out2.bin suffix > prog2
+```
+## Step 9: Make Executable and Verify
+Grant execution permissions, run both programs to check their outputs, and verify that their MD5 hashes match.
+```text
+chmod +x prog1 prog2
+./prog1
+./prog2
+md5sum prog1 prog2
+```
+```text
+# 1. Create directory and navigate into it
+mkdir md5_task3 && cd md5_task3
+
+# 2. Compile main.c (Assuming main.c is already created)
+gcc main.c -o program
+
+# 3. Find the array offset
+OFFSET=$(grep -a -b -o "AAAAAAAAAAAAAAAA" program | head -n 1 | cut -d: -f1)
+echo "Array starts at byte offset: $OFFSET"
+
+# 4. Extract Prefix (Using 3072 as a multiple of 64 inside the array)
+head -c 3072 program > prefix
+
+# 5. Generate collision files
+md5collgen -p prefix -o out1.bin out2.bin
+
+# 6. Extract Suffix (Prefix size 3072 + 128 bytes + 1 = 3201)
+tail -c +3201 program > suffix
+
+# 7. Merge files to create final binaries
+cat out1.bin suffix > prog1
+cat out2.bin suffix > prog2
+
+# 8. Set execution permissions, run binaries, and verify MD5 hashes
+chmod +x prog1 prog2
+./prog1
+./prog2
+md5sum prog1 prog2
+```
+# SEED Labs – MD5 Collision Attack (Task 4)
+
+This guide provides a step-by-step walk-through for **Task 4** of the SEED Labs MD5 Collision Attack. The goal of this task is to create two executable programs that have the exact same MD5 hash value, but execute different code paths (one executes benign code, while the other executes malicious code).
+
+---
+
+## Step 1: Create a Working Directory
+
+```bash
+# 1. Create directory and navigate into it
+mkdir md5_task4 
+
+cd md5_task4
+
+# 2. Compile task4.c (Assuming task4.c is already created)
+gcc task4.c -o program
+
+# 3. Find offset of Array X
+X_OFFSET=$(grep -a -b -o "AAAAAAAAAAAAAAAA" program | head -n 1 | cut -d: -f1); echo "Array X starts at offset: $X_OFFSET"
+
+# 4. Extract Prefix (Using 3072 as a multiple of 64 inside Array X)
+head -c 3072 program > prefix
+
+# 5. Generate collision blocks P and Q
+md5collgen -p prefix -o out1.bin out2.bin
+
+# 6. Extract P block (128 bytes)
+tail -c 128 out1.bin > p_block.bin
+
+# 7. Extract raw suffix (3072 + 128 + 1 = 3201)
+tail -c +3201 program > suffix_raw
+
+# 8. Find Array Y inside suffix_raw and replace its first 128 bytes with P block
+Y_OFFSET=$(grep -a -b -o "AAAAAAAAAAAAAAAA" suffix_raw | head -n 1 | cut -d: -f1)
+head -c $Y_OFFSET suffix_raw > suffix_part1
+AFTER_Y=$((Y_OFFSET + 128 + 1))
+tail -c +$AFTER_Y suffix_raw > suffix_part2
+cat suffix_part1 p_block.bin suffix_part2 > suffix_modified
+
+# 9. Combine outputs to create final binaries
+cat out1.bin suffix_modified > prog_benign
+cat out2.bin suffix_modified > prog_malicious
+
+# 10. Grant permissions, run executables, and verify MD5 hashes
+chmod +x prog_benign prog_malicious
+./prog_benign
+./prog_malicious
+md5sum prog_benign prog_malicious
+
+```
+
+## Step 2: Create the C Source File
+Create `task4.c` using `nano`. This code compares two arrays, X and Y. If X and Y are identical, it executes the benign code block. If they are different, it executes the malicious code block.
+`nano task4.c`
+```text
+#include <stdio.h>
+#include <string.h>
+
+// Array X (will be modified by md5collgen)
+unsigned char X[200] = {
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A'
+};
+
+// Array Y (placed in the suffix region)
+unsigned char Y[200] = {
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A',
+    'A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A','A'
+};
+
+int main() {
+    if (memcmp(X, Y, 200) == 0) {
+        printf("\n[+] SUCCESS: Executing BENIGN Code!\n\n");
+    } else {
+        printf("\n[!] ALERT: Executing MALICIOUS Code!\n\n");
+    }
+    return 0;
+}
+
+```
+* (To save in nano: press Ctrl + O, then Enter, then exit with Ctrl + X)
 
 
 
@@ -173,7 +395,7 @@ MD5 operates on 64-byte blocks iteratively using a compression function $f$:
 
 
 
-
+ 
 
 
 
