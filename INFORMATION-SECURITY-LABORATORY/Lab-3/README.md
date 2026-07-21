@@ -7,7 +7,7 @@ MD5, short for **Message-Digest Algorithm 5**, is a legacy cryptographic hash fu
 * **Security Status:** It is considered **deprecated and insecure** for sensitive cryptographic purposes. This is due to discovered vulnerabilities that allow **Collisions** (where two completely different files or inputs produce the exact same hash value).
 * **Current Use Cases:** While it is no longer secure for passwords or high-security applications, it is still commonly used in low-risk scenarios, such as verifying data integrity (**Checksums**) to ensure a file wasn't corrupted during a basic network transfer
 
-# MD5 Collision Lab - Task 2 Guide
+# MD5 Collision Lab - Task 1 Guide
 
 This README provides a clear, step-by-step guide to executing Task 2 of the MD5 Collision Lab. The goal is to analyze how the length of the prefix file impacts the final generated files and to answer the required lab questions.
 
